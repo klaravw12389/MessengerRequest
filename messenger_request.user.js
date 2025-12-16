@@ -41,7 +41,7 @@ window.MESSENGER_DATA = {
         {
             "name": "Libra",
             "short": "LIBRA LEATHER",
-            "full" : "LIBRA LEATHER/MITCH ALFUS\n285 Lafayette Street, unit 2B\nNew York NY 10012\n212-695-3114\n*Temporary Address*"
+            "full": "LIBRA LEATHER/MITCH ALFUS\n285 Lafayette Street, unit 2B\nNew York NY 10012\n212-695-3114\n*Temporary Address*"
             //"full": "LIBRA LEATHER\nAttn: Valentina Taylor\n199 Lafayette Street, Unit 5D\nNew York, NY, 10012\n212-695-3114"
         },
         {
@@ -66,47 +66,47 @@ window.MESSENGER_DATA = {
         }
     ],
     "packages": [
-            {
-                "name": "SEGMENT DINING TABLE TOP",
-                "description": "SEGMENT DINING TABLE TOP:	107\" x 44\" x 7\",	~ 500 lbs,	QTY 1."
-            },
-            {
-                "name": "SEGMENT CONSOLE TABLE TOP",
-                "description": "SEGMENT CONSOLE TABLE TOP:	58\" x 17.5\" x 4.25\",	~ 75 lbs,	QTY 1."
-            },
-            {
-                "name": "SEGMENT COFFEE TABLE TOP",
-                "description": "SEGMENT COFFEE TABLE TOP:	52\" x 32\" x 4.625\",	~ 125 lbs,	QTY 1."
-            },
-            {
-                "name": "SEGMENT OCCASIONAL TABLE TOP",
-                "description": "SEGMENT OCCASIONAL TABLE TOP:	11\" x 13\" x 3\",	~5 lbs,	QTY 1."
-            },
-            {
-                "name": "SEGMENT SIDE TABLE TOP",
-                "description": "SEGMENT SIDE TABLE TOP:	22\" x 22\" x 4\",	~10 lbs,	QTY 1."
-            },
-            {
-                "name": "SEGMENT DINING LEGS",
-                "description": "SEGMENT DINING LEGS:	18\" x 30\" x 3\",	~ 80 lbs,	QTY 6."
-            },
-            {
-                "name": "SEGMENT CONSOLE LEGS",
-                "description": "SEGMENT CONSOLE LEGS:	18\" x 33\" x 3\",	~ 80 lbs,	QTY 6."
-            },
-            {
-                "name": "SEGMENT COFFEE LEGS",
-                "description": "SEGMENT COFFEE LEGS:	32\" x 15\" x 3\",	~ 80 lbs,	QTY 5."
-            },
-            {
-                "name": "SEGMENT OCCASIONAL LEGS",
-                "description": "SEGMENT OCCASIONAL LEGS:	11\" x 18\" x 3\",	~ 20 lbs,	QTY 5."
-            },
-            {
-                "name": "SEGMENT SIDE LEGS",
-                "description": "SEGMENT SIDE LEGS:	22\" x 19\" x 3\",	~ 40 lbs,	QTY 2."
-            },
-        ]
+        {
+            "name": "SEGMENT DINING TABLE TOP",
+            "description": "SEGMENT DINING TABLE TOP:	107\" x 44\" x 7\",	~ 500 lbs,	QTY 1."
+        },
+        {
+            "name": "SEGMENT CONSOLE TABLE TOP",
+            "description": "SEGMENT CONSOLE TABLE TOP:	58\" x 17.5\" x 4.25\",	~ 75 lbs,	QTY 1."
+        },
+        {
+            "name": "SEGMENT COFFEE TABLE TOP",
+            "description": "SEGMENT COFFEE TABLE TOP:	52\" x 32\" x 4.625\",	~ 125 lbs,	QTY 1."
+        },
+        {
+            "name": "SEGMENT OCCASIONAL TABLE TOP",
+            "description": "SEGMENT OCCASIONAL TABLE TOP:	11\" x 13\" x 3\",	~5 lbs,	QTY 1."
+        },
+        {
+            "name": "SEGMENT SIDE TABLE TOP",
+            "description": "SEGMENT SIDE TABLE TOP:	22\" x 22\" x 4\",	~10 lbs,	QTY 1."
+        },
+        {
+            "name": "SEGMENT DINING LEGS",
+            "description": "SEGMENT DINING LEGS:	18\" x 30\" x 3\",	~ 80 lbs,	QTY 6."
+        },
+        {
+            "name": "SEGMENT CONSOLE LEGS",
+            "description": "SEGMENT CONSOLE LEGS:	18\" x 33\" x 3\",	~ 80 lbs,	QTY 6."
+        },
+        {
+            "name": "SEGMENT COFFEE LEGS",
+            "description": "SEGMENT COFFEE LEGS:	32\" x 15\" x 3\",	~ 80 lbs,	QTY 5."
+        },
+        {
+            "name": "SEGMENT OCCASIONAL LEGS",
+            "description": "SEGMENT OCCASIONAL LEGS:	11\" x 18\" x 3\",	~ 20 lbs,	QTY 5."
+        },
+        {
+            "name": "SEGMENT SIDE LEGS",
+            "description": "SEGMENT SIDE LEGS:	22\" x 19\" x 3\",	~ 40 lbs,	QTY 2."
+        },
+    ]
 };
 
 (function () {
@@ -396,6 +396,25 @@ window.MESSENGER_DATA = {
         const dateDayNum = selectedDate.getDate();
         const year = selectedDate.getFullYear();
 
+        const now = new Date();
+        const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const diffTime = selectedDate - todayZero;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        let pickupDateTextPlain;
+        let pickupDateTextRich;
+
+        if (diffDays === 0) {
+            pickupDateTextPlain = 'today';
+            pickupDateTextRich = 'today';
+        } else if (diffDays === 1) {
+            pickupDateTextPlain = 'tomorrow';
+            pickupDateTextRich = 'tomorrow';
+        } else {
+            pickupDateTextPlain = `${dayName} ${dateStr}`;
+            pickupDateTextRich = `${dayName} ${monthName} ${dateDayNum}`;
+        }
+
         // Subject
         const subject = `Messenger Request ${dayName} ${dateStr} - ${fromAddr.short} to ${toAddr.short}`;
 
@@ -409,7 +428,7 @@ window.MESSENGER_DATA = {
 
         const bodyPlain = `Hello,
 
-I would like to schedule a pickup for ${dayName} ${dateStr} between ${pickup} - ${dropoff} at ${fromAddr.short} and delivery to ${toAddr.short}.
+I would like to schedule a pickup for ${pickupDateTextPlain} between ${pickup} - ${dropoff} at ${fromAddr.short} and delivery to ${toAddr.short}.
 
 Package specs:
 ${pkgDesc} PO ${po}
@@ -442,7 +461,7 @@ Via ${service.name}`;
         document.getElementById('mr-modal-overlay').remove();
 
         const emailData = {
-            pickup, dropoff, fromAddr, toAddr, pkgDesc, po, userName, dateDayNum, monthName, year, serviceName, dayName
+            pickup, dropoff, fromAddr, toAddr, pkgDesc, po, userName, dateDayNum, monthName, year, serviceName, dayName, pickupDateTextRich
         };
 
         waitForComposeAndInject(emailData);
@@ -463,7 +482,7 @@ Via ${service.name}`;
         addBr(); addBr();
 
         addText('I would like to schedule a pickup for ');
-        addText(`${data.dayName} ${data.monthName} ${data.dateDayNum} between `)
+        addText(`${data.pickupDateTextRich} between `)
         addText(`${data.pickup} - ${data.dropoff}`);
         addText(' at ');
         addBold(data.fromAddr.short);
