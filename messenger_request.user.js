@@ -1,280 +1,169 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.5
-// @description  Request delivery via Active Transport Services
+// @version      1.11
+// @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
-// @match        *://mail.google.com/*
-// @include      *://mail.google.com/*
-// @run-at       document-idle
+// @match        https://mail.google.com/*
 // @grant        none
 // ==/UserScript==
+
+// Embedded Data
+window.MESSENGER_DATA = {
+    "addresses": [
+        {
+            "name": "30TH",
+            "short": "APPARATUS Studio 30th st",
+            "full": "APPARATUS Studio\nAttn: Sam O'Brien\n124 West 30th Street\nNew York, NY 10001"
+        },
+        {
+            "name": "RH",
+            "short": "80 Richards",
+            "full": "APPARATUS Red Hook\nAttn: Receiving\n80 Richards Street, 4th FL\nBrooklyn, NY 11231\n347.246.4210 Ext 163"
+        },
+        {
+            "name": "Blacktable",
+            "short": "Blacktable Studios",
+            "full": "Blacktable Studio / NYC Laser Cut\nAttn: Fiona\n805 Rockaway Ave, Unit 5\nBrooklyn, NY 11212\nPhone:   (347) 335-0228"
+        },
+        {
+            "name": "Metalworks",
+            "short": "Metalworks",
+            "full": "Attn: Michael\nMetalworks Inc., 1303 Herschell Street, \nBronx, NY, 10461\n212-695-3114"
+        },
+        {
+            "name": "Continental Die",
+            "short": "Continental Die",
+            "full": "Continental Die\nAttn: Danny\n115 West 25th Street\nNew York, NY 10001\n212-242-0642"
+        },
+        {
+                "name": "Libra",
+                "short": "LIBRA LEATHER",
+                "full" : "LIBRA LEATHER/MITCH ALFUS\n285 Lafayette Street, unit 2B\nNew York NY 10012\n212-695-3114\n*Temporary Address*"
+                //"full": "LIBRA LEATHER\nAttn: Valentina Taylor\n199 Lafayette Street, Unit 5D\nNew York, NY, 10012\n212-695-3114"
+        },
+        {
+            "name": "NJWJ",
+            "short": "New Jersey Waterjet",
+            "full": "New Jersey Waterjet \nAttn: Larry\nNew Jersey Waterjet, 725 Lehigh Avenue\nUnit 4, Union, NJ,  07083\n732-910-1602"
+        },
+        {
+            "name": "DSA",
+            "short": "DSA Finishing",
+            "full": "DSA FINISHING attn: Diego\n130-16 91st Avenue\nRichmond Hill, New York 11418\nUnited States\n(718) 821-2124"
+        },
+        {
+            "name": "CL Precision",
+            "short": "CL Precision",
+            "full": "CL Precision\nAttn: George Lolis\n50-15 70th Street\nWoodside, NY 11377\nPhone:   718-651-8475"
+        },
+        {
+            "name": "KLN",
+            "short": "KLN Studio",
+            "full": "KLN Studio\nAttn: Toby Newman\n79 Grattan Street\nBrooklyn, NY, 11237\n707.291.6159"
+        }
+    ],
+    "packages": [
+            {
+                "name": "SEGMENT DINING TABLE TOP",
+                "description": "SEGMENT DINING TABLE TOP:	107\" x 44\" x 7\",	~ 500 lbs,	QTY 1."
+            },
+            {
+                "name": "SEGMENT CONSOLE TABLE TOP",
+                "description": "SEGMENT CONSOLE TABLE TOP:	58\" x 17.5\" x 4.25\",	~ 75 lbs,	QTY 1."
+            },
+            {
+                "name": "SEGMENT COFFEE TABLE TOP",
+                "description": "SEGMENT COFFEE TABLE TOP:	52\" x 32\" x 4.625\",	~ 125 lbs,	QTY 1."
+            },
+            {
+                "name": "SEGMENT OCCASIONAL TABLE TOP",
+                "description": "SEGMENT OCCASIONAL TABLE TOP:	11\" x 13\" x 3\",	~5 lbs,	QTY 1."
+            },
+            {
+                "name": "SEGMENT SIDE TABLE TOP",
+                "description": "SEGMENT SIDE TABLE TOP:	22\" x 22\" x 4\",	~10 lbs,	QTY 1."
+            },
+            {
+                "name": "SEGMENT DINING LEGS",
+                "description": "SEGMENT DINING LEGS:	18\" x 30\" x 3\",	~ 80 lbs,	QTY 6."
+            },
+            {
+                "name": "SEGMENT CONSOLE LEGS",
+                "description": "SEGMENT CONSOLE LEGS:	18\" x 33\" x 3\",	~ 80 lbs,	QTY 6."
+            },
+            {
+                "name": "SEGMENT COFFEE LEGS",
+                "description": "SEGMENT COFFEE LEGS:	32\" x 15\" x 3\",	~ 80 lbs,	QTY 5."
+            },
+            {
+                "name": "SEGMENT OCCASIONAL LEGS",
+                "description": "SEGMENT OCCASIONAL LEGS:	11\" x 18\" x 3\",	~ 20 lbs,	QTY 5."
+            },
+            {
+                "name": "SEGMENT SIDE LEGS",
+                "description": "SEGMENT SIDE LEGS:	22\" x 19\" x 3\",	~ 40 lbs,	QTY 2."
+            },
+        ]
+};
 
 (function () {
     'use strict';
 
-    console.log("Gmail Messenger Request: Script starting...");
-
-    // --- Data ---
-    const addresses = [
-        {
-            name: "30TH",
-            short: "APPARATUS Studio 30th st",
-            full: "APPARATUS Studio\nAttn: Sam O'Brien\n124 West 30th Street\nNew York, NY 10001"
-        },
-        {
-            name: "RH",
-            short: "80 Richards",
-            full: "APPARATUS Red Hook\nAttn: Receiving\n80 Richards Street, 4th FL\nBrooklyn, NY 11231\n347.246.4210 Ext 163"
-        },
-        {
-            name: "Blacktable",
-            short: "Blacktable Studios",
-            full: "Blacktable Studio / NYC Laser Cut\nAttn: Fiona\n805 Rockaway Ave, Unit 5\nBrooklyn, NY 11212\nPhone:   (347) 335-0228"
-        },
-        {
-            name: "Metalworks",
-            short: "Metalworks",
-            full: "Attn: Michael\nMetalworks Inc., 1303 Herschell Street, \nBronx, NY, 10461\n212-695-3114"
-        },
-        {
-            name: "Continental Die",
-            short: "Continental Die",
-            full: "Continental Die\nAttn: Danny\n115 West 25th Street\nNew York, NY 10001\n212-242-0642"
-        },
-        {
-            name: "Libra",
-            short: "LIBRA LEATHER",
-            full: "LIBRA LEATHER\nAttn: Valentina Taylor\n199 Lafayette Street, Unit 5D\nNew York, NY, 10012\n212-695-3114\n*Temporary Address*"
-        },
-        {
-            name: "NJWJ",
-            short: "New Jersey Waterjet",
-            full: "New Jersey Waterjet \nAttn: Larry\nNew Jersey Waterjet, 725 Lehigh Avenue\nUnit 4, Union, NJ,  07083\n732-910-1602"
-        },
-        {
-            name: "DSA",
-            short: "DSA Finishing",
-            full: "DSA FINISHING attn: Diego\n130-16 91st Avenue\nRichmond Hill, New York 11418\nUnited States\n(718) 821-2124"
-        },
-        {
-            name: "CL Precision",
-            short: "CL Precision",
-            full: "CL Precision\nAttn: George Lolis\n50-15 70th Street\nWoodside, NY 11377\nPhone:   718-651-8475"
-        },
-        {
-            name: "KLN",
-            short: "KLN Studio",
-            full: "KLN Studio\nAttn: Toby Newman\n79 Grattan Street\nBrooklyn, NY, 11237\n707.291.6159"
-        }
-    ];
-
-    const packages = [
-        {
-            name: "Cocktail top",
-            description: "SEGMENT OCCASIONAL TABLE TOP: 10.25\" x 13\" x 2.875\", ~5 lbs."
-        },
-        {
-            name: "Side table top",
-            description: "SEGMENT SIDE TABLE TOP:"
-        }
-    ];
-
-    const RECIPIENTS = {
-        to: "active orders <ordersforactive@gmail.com>",
-        cc: "Procurement APPARATUS <procurement@apparatusstudio.com>,Jessica Soha APPARATUS <jessica.soha@apparatusstudio.com>,Jared Brosky APPARATUS <jared.brosky@apparatusstudio.com>,APPARATUS Shipping <shipping@apparatusstudio.com>,Vance Cherebin APPARATUS <vance.cherebin@apparatusstudio.com>"
+    // Embedded Data
+    const DATA = window.MESSENGER_DATA || {
+        "addresses": [],
+        "packages": []
     };
 
-    // --- UI Styles ---
-    const styles = `
+    const SERVICES = {
+        "Active": {
+            email: "ordersforactive@gmail.com",
+            name: "Active"
+        },
+        "OnSchedule": {
+            email: "jgilde@onschedulemessenger.com",
+            name: "OnSchedule"
+        }
+    };
+    const CC_EMAILS = [
+        "procurement@apparatusstudio.com",
+        "jessica.soha@apparatusstudio.com",
+        "jared.brosky@apparatusstudio.com",
+        "shipping@apparatusstudio.com",
+        "vance.cherebin@apparatusstudio.com",
+        "receiving@apparatusstudio.com"
+    ].join(",");
+
+    // Styles
+    const style = document.createElement('style');
+    style.textContent = `
         #mr-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            display: none;
-            justify-content: center;
-            align-items: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: transparent; z-index: 10000; display: flex;
+            justify-content: center; align-items: center;
+            pointer-events: none;
         }
         #mr-modal {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 400px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: white; padding: 20px; border-radius: 8px;
+            width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             font-family: sans-serif;
+            z-index: 10001;
+            pointer-events: auto;
         }
-        #mr-modal h2 {
-            margin-top: 0;
-            color: #333;
-        }
-        .mr-field {
-            margin-bottom: 15px;
-        }
-        .mr-field label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 12px;
-            color: #555;
-        }
-        .mr-field select, .mr-field input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .mr-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        .mr-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .mr-btn-primary {
-            background: #1a73e8;
-            color: white;
-        }
-        .mr-btn-secondary {
-            background: #f1f3f4;
-            color: #333;
-        }
-        /* Floating button style for fallback */
-        #mr-trigger-btn.mr-floating {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9998;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            background-color: #1a73e8 !important;
-            color: white !important;
-            padding: 12px 24px;
-            border-radius: 24px;
-            font-family: 'Google Sans', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        /* Sidebar button style */
-        #mr-trigger-btn.mr-sidebar {
-            margin-top: 10px;
-            cursor: pointer;
-            background-color: #f2f6fc;
-            color: #202124;
-            border: 1px solid transparent;
-            border-radius: 24px;
-            height: 48px;
-            padding: 0 24px;
-            font-family: 'Google Sans',Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: box-shadow .28s cubic-bezier(0.4,0,0.2,1),background-color .28s cubic-bezier(0.4,0,0.2,1);
-            /* Ensure it takes up space in the column if needed, or aligns left */
-            margin-left: 8px; 
-        }
-        #mr-trigger-btn.mr-sidebar:hover {
-            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3),0 1px 3px 1px rgba(60,64,67,0.15);
-            background-color: #e8f0fe;
-        }
-        
-        /* Toast notification */
-        #mr-toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #323232;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            z-index: 10000;
-            font-family: sans-serif;
-            font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            animation: fadeOut 0.5s ease-in-out 4.5s forwards;
-        }
-        @keyframes fadeOut {
-            to { opacity: 0; visibility: hidden; }
-        }
+        #mr-modal h2 { margin-top: 0; cursor: move; }
+        .mr-field { margin-bottom: 15px; }
+        .mr-field label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .mr-field select, .mr-field input { width: 100%; padding: 8px; box-sizing: border-box; }
+        .mr-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+        .mr-btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+        .mr-btn-primary { background: #1a73e8; color: white; }
+        .mr-btn-secondary { background: #ddd; color: black; }
     `;
-
-    // --- Helper Functions ---
-    function addStyles() {
-        const styleSheet = document.createElement("style");
-        styleSheet.textContent = styles;
-        document.head.appendChild(styleSheet);
-    }
-
-    function showToast() {
-        const toast = document.createElement('div');
-        toast.id = 'mr-toast';
-        toast.textContent = 'Messenger Request Script Loaded';
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            if (toast.parentElement) toast.parentElement.removeChild(toast);
-        }, 5000);
-    }
-
-    function getTomorrow() {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow;
-    }
-
-    function formatDate(date) {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-        return {
-            dayName: days[date.getDay()],
-            dateFormatted: `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`,
-            dayNumber: date.getDate(),
-            monthAbbr: months[date.getMonth()],
-            year: date.getFullYear()
-        };
-    }
-
-    function createField(labelText, inputType, id, placeholder, options) {
-        const div = document.createElement('div');
-        div.className = 'mr-field';
-
-        const label = document.createElement('label');
-        label.textContent = labelText;
-        div.appendChild(label);
-
-        let input;
-        if (inputType === 'select') {
-            input = document.createElement('select');
-            input.id = id;
-            options.forEach((opt, idx) => {
-                const option = document.createElement('option');
-                option.value = idx;
-                option.textContent = opt.text;
-                input.appendChild(option);
-            });
-        } else {
-            input = document.createElement('input');
-            input.type = 'text';
-            input.id = id;
-            if (placeholder) input.placeholder = placeholder;
-        }
-        div.appendChild(input);
-        return div;
-    }
+    document.head.appendChild(style);
 
     function createModal() {
+        console.log('Messenger Request: createModal called');
         if (document.getElementById('mr-modal-overlay')) return;
 
         const overlay = document.createElement('div');
@@ -283,105 +172,245 @@
         const modal = document.createElement('div');
         modal.id = 'mr-modal';
 
-        const h2 = document.createElement('h2');
-        h2.textContent = 'Messenger Request';
-        modal.appendChild(h2);
+        const title = document.createElement('h2');
+        title.innerText = 'Messenger Request';
+        modal.appendChild(title);
 
-        // From
-        const fromOptions = addresses.map(addr => ({ text: `${addr.name} (${addr.short})` }));
-        modal.appendChild(createField('From', 'select', 'mr-from', null, fromOptions));
+        function createField(labelText, type, id, options = null, placeholder = '') {
+            const div = document.createElement('div');
+            div.className = 'mr-field';
 
-        // To
-        const toOptions = addresses.map(addr => ({ text: `${addr.name} (${addr.short})` }));
-        modal.appendChild(createField('To', 'select', 'mr-to', null, toOptions));
+            const label = document.createElement('label');
+            label.innerText = labelText;
+            div.appendChild(label);
 
-        // Package
-        const pkgOptions = packages.map(pkg => ({ text: pkg.name }));
-        modal.appendChild(createField('Package', 'select', 'mr-package', null, pkgOptions));
+            let input;
+            if (type === 'select') {
+                input = document.createElement('select');
+                input.id = id;
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.innerText = opt.text;
+                    input.appendChild(option);
+                });
+            } else if (type === 'datalist') {
+                input = document.createElement('input');
+                input.id = id;
+                input.setAttribute('list', id + '-list');
+                const datalist = document.createElement('datalist');
+                datalist.id = id + '-list';
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    datalist.appendChild(option);
+                });
+                div.appendChild(datalist);
+            } else {
+                input = document.createElement('input');
+                input.type = type; // Use the passed type (e.g., 'text' or 'date')
+                input.id = id;
+                if (placeholder) input.placeholder = placeholder;
+            }
+            div.appendChild(input);
+            return div;
+        }
+        const addressOptions = DATA.addresses.map(a => ({ value: a.name, text: a.name }));
+        const packageOptions = DATA.packages.map(p => ({ value: p.name, text: p.name }));
+        const serviceOptions = Object.keys(SERVICES).map(s => ({ value: s, text: s }));
 
-        // PO Number
-        modal.appendChild(createField('PO Number', 'text', 'mr-po', 'e.g. 12345'));
+        // Date Options Generation
+        // Default to next business day
+        const today = new Date();
+        let targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + 1); // Start with tomorrow
 
-        // Pickup Time
-        modal.appendChild(createField('Pickup Time', 'text', 'mr-pickup', 'e.g. 10:00 AM'));
+        // If Saturday (6), add 2 days -> Monday
+        if (targetDate.getDay() === 6) {
+            targetDate.setDate(targetDate.getDate() + 2);
+        }
+        // If Sunday (0), add 1 day -> Monday
+        else if (targetDate.getDay() === 0) {
+            targetDate.setDate(targetDate.getDate() + 1);
+        }
 
-        // Dropoff Time
-        modal.appendChild(createField('Dropoff Time', 'text', 'mr-dropoff', 'e.g. 2:00 PM'));
+        // Format to YYYY-MM-DD for input type="date"
+        const yyyy = targetDate.getFullYear();
+        const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(targetDate.getDate()).padStart(2, '0');
+        const defaultDateValue = `${yyyy}-${mm}-${dd}`;
 
-        // User Name
-        const savedName = localStorage.getItem('mr_username') || '';
-        const nameField = createField('Your Name', 'text', 'mr-username', 'Your Name');
-        nameField.querySelector('input').value = savedName;
-        modal.appendChild(nameField);
+        modal.appendChild(createField('Messenger Service', 'select', 'mr-service', serviceOptions));
 
-        // Actions
-        const actions = document.createElement('div');
-        actions.className = 'mr-actions';
+        // Add Date Picker
+        const dateField = createField('Date', 'date', 'mr-date');
+        // Select the default value
+        dateField.querySelector('input').value = defaultDateValue;
+        modal.appendChild(dateField);
+
+        modal.appendChild(createField('From Address', 'select', 'mr-from', addressOptions));
+        modal.appendChild(createField('To Address', 'select', 'mr-to', addressOptions));
+
+        modal.appendChild(createField('Package', 'datalist', 'mr-package', packageOptions));
+
+        const poField = createField('PO Number', 'text', 'mr-po', null, 'e.g. 12345');
+        poField.querySelector('input').setAttribute('autocomplete', 'off');
+        modal.appendChild(poField);
+
+        // Default times set
+        const timeContainer = document.createElement('div');
+        timeContainer.style.display = 'flex';
+        timeContainer.style.gap = '15px';
+
+        const pickupField = createField('Pickup Time', 'text', 'mr-pickup', null, 'e.g. 10:00 AM');
+        pickupField.querySelector('input').value = '10:00 AM';
+        pickupField.style.flex = '1';
+        timeContainer.appendChild(pickupField);
+
+        const dropoffField = createField('Dropoff Time', 'text', 'mr-dropoff', null, 'e.g. 3:00 PM');
+        dropoffField.querySelector('input').value = '3:00 PM';
+        dropoffField.style.flex = '1';
+        timeContainer.appendChild(dropoffField);
+
+        modal.appendChild(timeContainer);
+
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'mr-buttons';
 
         const cancelBtn = document.createElement('button');
         cancelBtn.className = 'mr-btn mr-btn-secondary';
-        cancelBtn.id = 'mr-cancel';
-        cancelBtn.textContent = 'Cancel';
-        actions.appendChild(cancelBtn);
+        cancelBtn.innerText = 'Cancel';
+        cancelBtn.onclick = () => overlay.remove();
 
         const createBtn = document.createElement('button');
         createBtn.className = 'mr-btn mr-btn-primary';
-        createBtn.id = 'mr-create';
-        createBtn.textContent = 'Create Email';
-        actions.appendChild(createBtn);
+        createBtn.innerText = 'Create Email';
+        createBtn.onclick = generateEmail;
 
-        modal.appendChild(actions);
+        btnContainer.appendChild(cancelBtn);
+        btnContainer.appendChild(createBtn);
+        modal.appendChild(btnContainer);
+
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
-        // Events
-        cancelBtn.onclick = () => {
-            overlay.style.display = 'none';
-        };
+        // Drag functionality
+        const header = modal.querySelector('h2');
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
 
-        createBtn.onclick = generateEmail;
+        header.addEventListener("mousedown", dragStart);
+        document.addEventListener("mouseup", dragEnd);
+        document.addEventListener("mousemove", drag);
 
-        // Close on outside click
-        overlay.onclick = (e) => {
-            if (e.target === overlay) {
-                overlay.style.display = 'none';
+        function dragStart(e) {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+
+            if (e.target === header) {
+                isDragging = true;
             }
-        };
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, modal);
+            }
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
+        }
+    }
+
+    function getUserName() {
+        let detectedName = "Klara"; // Fallback
+        try {
+            const accountBtn = document.querySelector('a[aria-label^="Google Account:"]');
+            if (accountBtn) {
+                const ariaLabel = accountBtn.getAttribute('aria-label');
+                // Format: "Google Account: Name (email)"
+                // Extract Name
+                const nameMatch = ariaLabel.match(/Google Account:\s+([^(]+)/);
+                if (nameMatch && nameMatch[1]) {
+                    const fullName = nameMatch[1].trim();
+                    detectedName = fullName.split(' ')[0]; // First name
+                }
+            }
+        } catch (e) {
+            console.error('Messenger Request: Failed to detect user name', e);
+        }
+        return detectedName;
     }
 
     function generateEmail() {
-        const fromIdx = document.getElementById('mr-from').value;
-        const toIdx = document.getElementById('mr-to').value;
-        const pkgIdx = document.getElementById('mr-package').value;
+        console.log('Messenger Request: generateEmail called');
+        const serviceName = document.getElementById('mr-service').value;
+        const userName = getUserName();
+        const fromName = document.getElementById('mr-from').value;
+        const toName = document.getElementById('mr-to').value;
+        const packageName = document.getElementById('mr-package').value;
         const po = document.getElementById('mr-po').value;
         const pickup = document.getElementById('mr-pickup').value;
         const dropoff = document.getElementById('mr-dropoff').value;
-        const username = document.getElementById('mr-username').value;
 
-        if (!po || !pickup || !dropoff || !username) {
-            alert('Please fill in all fields');
-            return;
-        }
+        const fromAddr = DATA.addresses.find(a => a.name === fromName);
+        const toAddr = DATA.addresses.find(a => a.name === toName);
 
-        localStorage.setItem('mr_username', username);
+        // Find package description if it matches a known package, otherwise use the input value
+        const knownPkg = DATA.packages.find(p => p.name === packageName);
+        const pkgDesc = knownPkg ? knownPkg.description : packageName;
 
-        const fromAddr = addresses[fromIdx];
-        const toAddr = addresses[toIdx];
-        const pkg = packages[pkgIdx];
+        // Date Handling
+        const selectedDateValue = document.getElementById('mr-date').value;
+        // Parse YYYY-MM-DD manually to avoid UTC issues
+        const [sYear, sMonth, sDay] = selectedDateValue.split('-').map(Number);
+        const selectedDate = new Date(sYear, sMonth - 1, sDay);
 
-        const tomorrow = getTomorrow();
-        const dateInfo = formatDate(tomorrow);
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-        // Subject: Messenger Request [tomorrows week day] [tomorrows date formatted in M/D/Y] - [to address, short form]
-        const subject = `Messenger Request ${dateInfo.dayName} ${dateInfo.dateFormatted} - ${toAddr.short}`;
+        const dayName = days[selectedDate.getDay()];
+        const monthName = months[selectedDate.getMonth()];
+        const dateStr = `${selectedDate.getMonth() + 1}/${selectedDate.getDate()}/${selectedDate.getFullYear()}`;
+        const dateDayNum = selectedDate.getDate();
+        const year = selectedDate.getFullYear();
 
-        // Body Construction
-        const body = `Hello,
+        // Subject
+        const subject = `Messenger Request ${dayName} ${dateStr} - ${fromAddr.short} to ${toAddr.short}`;
 
-I would like to schedule a pickup for tomorrow between ${pickup} - ${dropoff} at ${fromAddr.short} and delivery to ${toAddr.short}.
+        // Body
+        // const userName = "Klara" // Now dynamic
+
+        // Create mailto link to trigger Gmail's internal docked compose window
+        // We use a plain text body for the mailto link as a fallback and to initialize the window
+        const service = SERVICES[serviceName];
+        const toEmail = service.email;
+
+        const bodyPlain = `Hello,
+
+I would like to schedule a pickup for ${dayName} ${dateStr} between ${pickup} - ${dropoff} at ${fromAddr.short} and delivery to ${toAddr.short}.
 
 Package specs:
-${pkg.description} PO ${po}
+${pkgDesc} PO ${po}
 
 PICK UP – AFTER ${pickup}
 ${fromAddr.full}
@@ -392,99 +421,281 @@ ${toAddr.full}
 Please let me know if this is possible.
 
 Thank you so much,
-${username}
+${userName}
 
-${dateInfo.dayNumber} ${dateInfo.monthAbbr} ${dateInfo.year} MESSENGER
+${dateDayNum} ${monthName} ${year} MESSENGER
 Pickup : ${fromAddr.short} PO ${po}
 Delivery : ${toAddr.short}
-Via Active`;
+Via ${service.name}`;
 
-        // Create Gmail Compose URL
-        const params = new URLSearchParams();
-        params.append('view', 'cm');
-        params.append('fs', '1');
-        params.append('to', RECIPIENTS.to);
-        params.append('cc', RECIPIENTS.cc);
-        params.append('su', subject);
-        params.append('body', body);
+        const mailtoUrl = `mailto:${toEmail}?cc=${encodeURIComponent(CC_EMAILS)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyPlain)}`;
 
-        const url = `https://mail.google.com/mail/?${params.toString()}`;
+        const link = document.createElement('a');
+        link.href = mailtoUrl;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-        window.open(url, '_blank');
-        document.getElementById('mr-modal-overlay').style.display = 'none';
-    }
+        document.getElementById('mr-modal-overlay').remove();
 
-    function init() {
-        console.log("Gmail Messenger Request: Init called");
-        addStyles();
-        showToast();
-        createModal();
-
-        // Create the button initially as a floating button
-        let btn = document.getElementById('mr-trigger-btn');
-        if (!btn) {
-            btn = document.createElement('div');
-            btn.id = 'mr-trigger-btn';
-            btn.textContent = 'Messenger Request';
-            btn.className = 'mr-trigger-btn mr-floating'; // Default to floating
-            btn.onclick = () => {
-                document.getElementById('mr-modal-overlay').style.display = 'flex';
-            };
-            document.body.appendChild(btn);
-            console.log("Gmail Messenger Request: Floating button added");
-        }
-
-        // Try to find the real Compose button to move our button next to it
-        const checkForCompose = () => {
-            // Strategy 1: Look for the specific 'gh="cm"' attribute
-            let composeBtn = document.querySelector('div[role="button"][gh="cm"]');
-
-            // Strategy 2: Look for button with "Compose" text
-            if (!composeBtn) {
-                const buttons = Array.from(document.querySelectorAll('div[role="button"]'));
-                composeBtn = buttons.find(el => el.innerText && el.innerText.trim() === 'Compose');
-            }
-
-            if (composeBtn) {
-                // The user reported the button appearing to the right, which means the direct parent is a flex-row.
-                // We want to go up one level to the sidebar column container.
-                const composeWrapper = composeBtn.parentElement;
-                const sidebar = composeWrapper ? composeWrapper.parentElement : null;
-
-                if (sidebar) {
-                    // Check if we are already in the sidebar
-                    if (btn.parentElement === sidebar) return;
-
-                    console.log("Gmail Messenger Request: Found Compose button wrapper, moving trigger button to sidebar");
-
-                    // Switch to sidebar style
-                    btn.className = 'mr-trigger-btn mr-sidebar';
-
-                    // Insert after the compose wrapper to appear below it
-                    if (composeWrapper.nextSibling) {
-                        sidebar.insertBefore(btn, composeWrapper.nextSibling);
-                    } else {
-                        sidebar.appendChild(btn);
-                    }
-                }
-            }
+        const emailData = {
+            pickup, dropoff, fromAddr, toAddr, pkgDesc, po, userName, dateDayNum, monthName, year, serviceName, dayName
         };
 
-        // Check every second
-        setInterval(checkForCompose, 1000);
+        waitForComposeAndInject(emailData);
     }
 
-    // Start immediately if body exists, otherwise wait
-    if (document.body) {
-        init();
-    } else {
-        const observer = new MutationObserver((mutations, obs) => {
-            if (document.body) {
-                init();
-                obs.disconnect();
-            }
+    function createRichBody(data) {
+        const fragment = document.createDocumentFragment();
+
+        const addText = (text) => fragment.appendChild(document.createTextNode(text));
+        const addBold = (text) => {
+            const b = document.createElement('b');
+            b.innerText = text;
+            fragment.appendChild(b);
+        };
+        const addBr = () => fragment.appendChild(document.createElement('br'));
+
+        addText('Hello,');
+        addBr(); addBr();
+
+        addText('I would like to schedule a pickup for ');
+        addText(`${data.dayName} ${data.monthName} ${data.dateDayNum} between `)
+        addText(`${data.pickup} - ${data.dropoff}`);
+        addText(' at ');
+        addBold(data.fromAddr.short);
+        addText(' and delivery to ');
+        addBold(data.toAddr.short);
+        addText('.');
+        addBr(); addBr();
+
+        addText('Package specs:');
+        addBr();
+        addText(`${data.pkgDesc} PO `);
+        addBold(data.po);
+        addBr(); addBr();
+
+        addBold('PICK UP – AFTER ');
+        addBold(data.pickup);
+        addBr();
+        data.fromAddr.full.split('\n').forEach((line, i) => {
+            if (i > 0) addBr();
+            addText(line);
         });
-        observer.observe(document.documentElement, { childList: true });
+        addBr(); addBr();
+
+        addBold('DROP OFF – BEFORE ');
+        addBold(data.dropoff);
+        addBr();
+        data.toAddr.full.split('\n').forEach((line, i) => {
+            if (i > 0) addBr();
+            addText(line);
+        });
+        addBr(); addBr();
+
+        addText('Please let me know if this is possible.');
+        addBr(); addBr();
+
+        addText('Thank you so much,');
+        addBr();
+        addText(data.userName);
+        addBr(); addBr();
+
+        addBold(`${data.dateDayNum} ${data.monthName} ${data.year} MESSENGER`);
+        addBr();
+        addText(`Pickup : ${data.fromAddr.short} PO ${data.po}`);
+        addBr();
+        addText(`Delivery : ${data.toAddr.short}`);
+        addBr();
+        addText(`Via ${data.serviceName}`);
+
+        return fragment;
     }
+
+    function waitForComposeAndInject(data) {
+        console.log('Messenger Request: Waiting for compose window...');
+        const start = Date.now();
+        const interval = setInterval(() => {
+            // Stop after 15 seconds
+            if (Date.now() - start > 15000) {
+                clearInterval(interval);
+                console.log('Messenger Request: Timed out waiting for compose window');
+                return;
+            }
+
+            // Find the message body
+            // Gmail uses div[aria-label="Message Body"] and role="textbox"
+            // We also look for contenteditable="true" to be safe
+            // We select the last one in case there are multiple, assuming the new one is last
+            const bodies = document.querySelectorAll('div[aria-label="Message Body"], div[role="textbox"][contenteditable="true"]');
+
+            // Filter for visible ones only to avoid hidden pre-loaded ones
+            const visibleBodies = Array.from(bodies).filter(b => b.offsetParent !== null);
+
+            const bodyElement = visibleBodies.length > 0 ? visibleBodies[visibleBodies.length - 1] : null;
+
+            if (bodyElement) {
+                // Check if we already injected
+                if (bodyElement.getAttribute('data-mr-injected') === 'true') {
+                    return;
+                }
+
+                // Wait for the plain text to be loaded by Gmail (from the mailto link)
+                // This prevents us from injecting before Gmail has finished initializing the draft
+                // RELAXED CHECK: Just check if it's not empty or if it has some content
+                console.log('Messenger Request: Body text found:', bodyElement.innerText);
+
+                if (bodyElement.innerText.trim().length === 0) {
+                    // It might be truly empty or loading. Let's wait a bit more.
+                    // But if it takes too long, we might want to just inject.
+                    // For now, let's just proceed if we found the element and it's visible.
+                }
+
+                console.log('Messenger Request: Injecting DOM body');
+
+                // Use DOM manipulation to bypass TrustedHTML issues
+                try {
+                    bodyElement.focus();
+                    // Clear existing content safely
+                    bodyElement.textContent = '';
+
+                    // Create and append new content
+                    const fragment = createRichBody(data);
+                    bodyElement.appendChild(fragment);
+
+                    console.log('Messenger Request: DOM injection success');
+                } catch (e) {
+                    console.error('Messenger Request: DOM injection failed', e);
+                }
+
+                bodyElement.setAttribute('data-mr-injected', 'true');
+
+                clearInterval(interval);
+            }
+        }, 500);
+    }
+
+    function createButtonElement(isFixed = false) {
+        const btn = document.createElement('div');
+        btn.innerText = 'Messenger Request';
+        btn.style.cursor = 'pointer';
+
+        // Reverted Styles with Drop Shadow
+        btn.style.backgroundColor = '#f2f2f2';
+        btn.style.color = '#3c4043';
+        btn.style.border = 'none';
+        btn.style.borderRadius = '13px';
+        btn.style.fontWeight = '500';
+        btn.style.display = 'flex';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.fontFamily = "'Google Sans',Roboto,RobotoDraft,Helvetica,Arial,sans-serif";
+        btn.style.fontSize = '14px';
+        btn.style.lineHeight = '20px';
+        btn.style.letterSpacing = '0.1px';
+
+        // Add Drop Shadow
+        btn.style.boxShadow = '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)';
+
+        if (isFixed) {
+            btn.id = 'mr-btn-fixed';
+            btn.style.position = 'fixed';
+            btn.style.bottom = '30px';
+            btn.style.left = '30px';
+            btn.style.zIndex = '9990';
+            btn.style.padding = '16px 24px';
+            btn.style.borderRadius = '28px'; // FAB style
+            btn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            btn.style.backgroundColor = 'white'; // Fixed button usually white
+            btn.innerText = 'Messenger Request';
+        } else {
+            btn.id = 'mr-btn-trigger';
+            btn.style.height = '45px';
+            btn.style.padding = '0 24px';
+            btn.style.margin = '0 0 16px 0';
+            btn.style.width = 'fit-content';
+        }
+
+        btn.addEventListener('mouseenter', () => {
+            btn.style.backgroundColor = '#e8eaed';
+            btn.style.boxShadow = '0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15)'; // Stronger shadow on hover
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.backgroundColor = isFixed ? 'white' : '#f2f2f2';
+            btn.style.boxShadow = isFixed ? '0 4px 8px rgba(0,0,0,0.2)' : '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)';
+        });
+
+        btn.addEventListener('click', function (e) {
+            console.log('Messenger Request: Button clicked');
+            e.preventDefault();
+            e.stopPropagation();
+            createModal();
+        });
+        return btn;
+    }
+
+    function addButton() {
+        if (document.getElementById('mr-btn-trigger')) return;
+
+        // Strategy: Find the button with text "Compose" more robustly
+        // Look for div with role="button" that contains "Compose"
+        const buttons = Array.from(document.querySelectorAll('div[role="button"]'));
+        const composeBtn = buttons.find(b => b.innerText && b.innerText.includes('Compose'));
+
+        if (composeBtn) {
+            console.log('Messenger Request: Found Compose button');
+
+            // Remove fixed button if it exists
+            const fixedBtn = document.getElementById('mr-btn-fixed');
+            if (fixedBtn) fixedBtn.remove();
+
+            const btn = createButtonElement(false);
+
+            // We want to insert it AFTER the Compose button's container.
+            // The Compose button is usually inside a container that is a sibling to the Navigation (Inbox, Starred, etc.)
+            // Let's try to find the container of the Compose button.
+
+            let container = composeBtn.parentElement;
+            // Traverse up a few levels to find a container that looks like the sidebar header
+            // or just insert after the button's direct parent if it seems isolated
+
+            // In modern Gmail, the Compose button is often in a div that is a sibling to the div containing "Inbox"
+            // Let's try to insert after the Compose button's immediate parent wrapper
+
+            if (container) {
+                // Check if we can find the "Inbox" container to insert before?
+                // It's safer to just append after the Compose button wrapper.
+
+                // Create a wrapper to align it
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.paddingLeft = '13px'; // Restore padding to align with Compose
+                wrapper.style.marginTop = '22px'; // Move lower
+                wrapper.appendChild(btn);
+
+                // Insert after the parent
+                container.insertAdjacentElement('afterend', wrapper);
+                return;
+            }
+        }
+
+
+    }
+
+    // Observer to handle dynamic loading
+    const observer = new MutationObserver((mutations) => {
+        addButton();
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // Initial check
+    setTimeout(addButton, 1000);
+    setTimeout(addButton, 3000);
+    setTimeout(addButton, 5000);
 
 })();
