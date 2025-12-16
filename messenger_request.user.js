@@ -12,14 +12,14 @@
 window.MESSENGER_DATA = {
     "addresses": [
         {
-            "name": "30TH",
-            "short": "APPARATUS Studio 30th st",
-            "full": "APPARATUS Studio\nAttn: Sam O'Brien\n124 West 30th Street\nNew York, NY 10001"
-        },
-        {
             "name": "RH",
             "short": "80 Richards",
             "full": "APPARATUS Red Hook\nAttn: Receiving\n80 Richards Street, 4th FL\nBrooklyn, NY 11231\n347.246.4210 Ext 163"
+        },
+        {
+            "name": "30TH",
+            "short": "APPARATUS Studio 30th st",
+            "full": "APPARATUS Studio\nAttn: Sam O'Brien\n124 West 30th Street\nNew York, NY 10001"
         },
         {
             "name": "Blacktable",
