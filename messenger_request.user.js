@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.17
+// @version      1.20
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
@@ -315,6 +315,12 @@ window.MESSENGER_DATA = {
         addCustomAddressBehavior(toField, 'mr-to', 'mr-to-custom');
         modal.appendChild(toField);
 
+        // Stop 2 Field (initially hidden)
+        const stop2Field = createField('Stop 2', 'select', 'mr-stop2', addressOptions);
+        stop2Field.style.display = 'none';
+        addCustomAddressBehavior(stop2Field, 'mr-stop2', 'mr-stop2-custom');
+        modal.appendChild(stop2Field);
+
         modal.appendChild(createField('Package', 'datalist', 'mr-package', packageOptions));
 
         const poField = createField('PO Number', 'text', 'mr-po', null, 'e.g. 12345');
@@ -337,6 +343,70 @@ window.MESSENGER_DATA = {
         timeContainer.appendChild(dropoffField);
 
         modal.appendChild(timeContainer);
+
+        // Round Trip Checkbox
+        const roundTripDiv = document.createElement('div');
+        roundTripDiv.className = 'mr-field';
+        roundTripDiv.style.display = 'flex';
+        roundTripDiv.style.alignItems = 'center';
+        roundTripDiv.style.cursor = 'pointer'; // Make entire area clickable-looking
+
+        const roundTripCheckbox = document.createElement('input');
+        roundTripCheckbox.type = 'checkbox';
+        roundTripCheckbox.id = 'mr-round-trip';
+        roundTripCheckbox.style.width = 'auto'; // Override 100% width
+        roundTripCheckbox.style.marginRight = '10px';
+        roundTripCheckbox.style.transform = 'scale(1.5)'; // Make it bigger
+        roundTripCheckbox.style.cursor = 'pointer';
+
+        const roundTripLabel = document.createElement('label');
+        roundTripLabel.innerText = 'Round Trip';
+        roundTripLabel.setAttribute('for', 'mr-round-trip'); // Correct way to set 'for'
+        roundTripLabel.style.marginBottom = '0'; // Override default margin
+        roundTripLabel.style.cursor = 'pointer';
+        roundTripLabel.style.fontSize = '16px'; // Slightly larger text to match
+
+        roundTripDiv.appendChild(roundTripCheckbox);
+        roundTripDiv.appendChild(roundTripLabel);
+        modal.appendChild(roundTripDiv);
+
+        // Multi-Stop Checkbox
+        const multiStopDiv = document.createElement('div');
+        multiStopDiv.className = 'mr-field';
+        multiStopDiv.style.display = 'flex';
+        multiStopDiv.style.alignItems = 'center';
+        multiStopDiv.style.cursor = 'pointer';
+
+        const multiStopCheckbox = document.createElement('input');
+        multiStopCheckbox.type = 'checkbox';
+        multiStopCheckbox.id = 'mr-multi-stop';
+        multiStopCheckbox.style.width = 'auto';
+        multiStopCheckbox.style.marginRight = '10px';
+        multiStopCheckbox.style.transform = 'scale(1.5)';
+        multiStopCheckbox.style.cursor = 'pointer';
+
+        const multiStopLabel = document.createElement('label');
+        multiStopLabel.innerText = 'Multi-Stop';
+        multiStopLabel.setAttribute('for', 'mr-multi-stop');
+        multiStopLabel.style.marginBottom = '0';
+        multiStopLabel.style.cursor = 'pointer';
+        multiStopLabel.style.fontSize = '16px';
+
+        multiStopDiv.appendChild(multiStopCheckbox);
+        multiStopDiv.appendChild(multiStopLabel);
+        modal.appendChild(multiStopDiv);
+
+        // Multi-Stop Logic
+        multiStopCheckbox.addEventListener('change', () => {
+            const toLabel = toField.querySelector('label');
+            if (multiStopCheckbox.checked) {
+                stop2Field.style.display = 'block';
+                toLabel.innerText = 'Stop 1';
+            } else {
+                stop2Field.style.display = 'none';
+                toLabel.innerText = 'To Address';
+            }
+        });
 
         const btnContainer = document.createElement('div');
         btnContainer.className = 'mr-buttons';
@@ -437,6 +507,9 @@ window.MESSENGER_DATA = {
         const pickup = document.getElementById('mr-pickup').value;
         const dropoff = document.getElementById('mr-dropoff').value;
 
+        const isRoundTrip = document.getElementById('mr-round-trip').checked;
+        const isMultiStop = document.getElementById('mr-multi-stop').checked;
+
         let fromAddr;
         if (fromName === 'Other') {
             const customText = document.getElementById('mr-from-custom').value;
@@ -461,6 +534,22 @@ window.MESSENGER_DATA = {
             };
         } else {
             toAddr = DATA.addresses.find(a => a.name === toName);
+        }
+
+        let stop2Addr = null;
+        if (isMultiStop) {
+            const stop2Name = document.getElementById('mr-stop2').value;
+            if (stop2Name === 'Other') {
+                const customText = document.getElementById('mr-stop2-custom').value;
+                const lines = customText.split('\n').filter(l => l.trim().length > 0);
+                stop2Addr = {
+                    name: 'Other',
+                    short: lines.length > 0 ? lines[0] : 'Custom Location',
+                    full: customText
+                };
+            } else {
+                stop2Addr = DATA.addresses.find(a => a.name === stop2Name);
+            }
         }
 
         // Find package description if it matches a known package, otherwise use the input value
@@ -502,7 +591,7 @@ window.MESSENGER_DATA = {
         }
 
         // Subject
-        const subject = `Messenger Request ${dayName} ${dateStr} - ${fromAddr.short} to ${toAddr.short}`;
+        const subject = `Messenger Request ${dayName} ${dateStr} - ${fromAddr.short} to ${toAddr.short}${isMultiStop ? ' to ' + stop2Addr.short : ''}${isRoundTrip ? ' Round Trip' : ''}`;
 
         // Body
         // const userName = "Klara" // Now dynamic
@@ -512,7 +601,98 @@ window.MESSENGER_DATA = {
         const service = SERVICES[serviceName];
         const toEmail = service.email;
 
-        const bodyPlain = `Hello,
+        let bodyPlain;
+
+        if (isRoundTrip && isMultiStop) {
+            bodyPlain = `Hello,
+
+I would like to schedule a multi-stop round trip pickup for ${pickupDateTextPlain} between ${pickup} - ${dropoff} starting at ${fromAddr.short}, going to ${toAddr.short}, then to ${stop2Addr.short}, and returning to ${fromAddr.short}.
+
+Package specs:
+${pkgDesc}${poSuffix}
+
+PICK UP – AFTER ${pickup}
+${fromAddr.full}
+
+STOP 1
+${toAddr.full}
+
+STOP 2
+${stop2Addr.full}
+
+DROP OFF – BEFORE ${dropoff}
+${fromAddr.full}
+
+Please let me know if this is possible.
+
+Thank you so much,
+${userName}
+
+${dateDayNum} ${monthName} ${year} MESSENGER
+Pickup : ${fromAddr.short}${poSuffix}
+Stop 1 : ${toAddr.short}
+Stop 2 : ${stop2Addr.short}
+Dropoff : ${fromAddr.short}
+Via ${service.name}`;
+
+        } else if (isRoundTrip) {
+            bodyPlain = `Hello,
+
+I would like to schedule a round trip pickup for ${pickupDateTextPlain} between ${pickup} - ${dropoff} starting at ${fromAddr.short}, going to ${toAddr.short}, and returning to ${fromAddr.short}.
+
+Package specs:
+${pkgDesc}${poSuffix}
+
+PICK UP – AFTER ${pickup}
+${fromAddr.full}
+
+PICK UP / DROP OFF
+${toAddr.full}
+
+DROP OFF – BEFORE ${dropoff}
+${fromAddr.full}
+
+Please let me know if this is possible.
+
+Thank you so much,
+${userName}
+
+${dateDayNum} ${monthName} ${year} MESSENGER
+Pickup : ${fromAddr.short}${poSuffix}
+Stop : ${toAddr.short}
+Dropoff : ${fromAddr.short}
+Via ${service.name}`;
+
+        } else if (isMultiStop) {
+            bodyPlain = `Hello,
+
+I would like to schedule a multi-stop pickup for ${pickupDateTextPlain} between ${pickup} - ${dropoff} starting at ${fromAddr.short}, going to ${toAddr.short}, and ending at ${stop2Addr.short}.
+
+Package specs:
+${pkgDesc}${poSuffix}
+
+PICK UP – AFTER ${pickup}
+${fromAddr.full}
+
+STOP 1
+${toAddr.full}
+
+DROP OFF – BEFORE ${dropoff}
+${stop2Addr.full}
+
+Please let me know if this is possible.
+
+Thank you so much,
+${userName}
+
+${dateDayNum} ${monthName} ${year} MESSENGER
+Pickup : ${fromAddr.short}${poSuffix}
+Stop 1 : ${toAddr.short}
+Delivery : ${stop2Addr.short}
+Via ${service.name}`;
+
+        } else {
+            bodyPlain = `Hello,
 
 I would like to schedule a pickup for ${pickupDateTextPlain} between ${pickup} - ${dropoff} at ${fromAddr.short} and delivery to ${toAddr.short}.
 
@@ -534,6 +714,7 @@ ${dateDayNum} ${monthName} ${year} MESSENGER
 Pickup : ${fromAddr.short}${poSuffix}
 Delivery : ${toAddr.short}
 Via ${service.name}`;
+        }
 
         const mailtoUrl = `mailto:${toEmail}?cc=${encodeURIComponent(CC_EMAILS)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyPlain)}`;
 
@@ -547,7 +728,7 @@ Via ${service.name}`;
         document.getElementById('mr-modal-overlay').remove();
 
         const emailData = {
-            pickup, dropoff, fromAddr, toAddr, pkgDesc, po, userName, dateDayNum, monthName, year, serviceName, dayName, pickupDateTextRich
+            pickup, dropoff, fromAddr, toAddr, stop2Addr, pkgDesc, po, userName, dateDayNum, monthName, year, serviceName, dayName, pickupDateTextRich, isRoundTrip, isMultiStop
         };
 
         waitForComposeAndInject(emailData);
@@ -567,14 +748,52 @@ Via ${service.name}`;
         addText('Hello,');
         addBr(); addBr();
 
-        addText('I would like to schedule a pickup for ');
-        addText(`${data.pickupDateTextRich} between `)
-        addText(`${data.pickup} - ${data.dropoff}`);
-        addText(' at ');
-        addBold(data.fromAddr.short);
-        addText(' and delivery to ');
-        addBold(data.toAddr.short);
-        addText('.');
+        if (data.isRoundTrip && data.isMultiStop) {
+            addText('I would like to schedule a multi-stop round trip pickup for ');
+            addText(`${data.pickupDateTextRich} between `)
+            addText(`${data.pickup} - ${data.dropoff}`);
+            addText(' starting at ');
+            addBold(data.fromAddr.short);
+            addText(', going to ');
+            addBold(data.toAddr.short);
+            addText(', then to ');
+            addBold(data.stop2Addr.short);
+            addText(', and returning to ');
+            addBold(data.fromAddr.short);
+            addText('.');
+
+        } else if (data.isRoundTrip) {
+            addText('I would like to schedule a round trip pickup for ');
+            addText(`${data.pickupDateTextRich} between `)
+            addText(`${data.pickup} - ${data.dropoff}`);
+            addText(' starting at ');
+            addBold(data.fromAddr.short);
+            addText(', going to ');
+            addBold(data.toAddr.short);
+            addText(', and returning to ');
+            addBold(data.fromAddr.short);
+            addText('.');
+        } else if (data.isMultiStop) {
+            addText('I would like to schedule a multi-stop pickup for ');
+            addText(`${data.pickupDateTextRich} between `)
+            addText(`${data.pickup} - ${data.dropoff}`);
+            addText(' starting at ');
+            addBold(data.fromAddr.short);
+            addText(', going to ');
+            addBold(data.toAddr.short);
+            addText(', and ending at ');
+            addBold(data.stop2Addr.short);
+            addText('.');
+        } else {
+            addText('I would like to schedule a pickup for ');
+            addText(`${data.pickupDateTextRich} between `)
+            addText(`${data.pickup} - ${data.dropoff}`);
+            addText(' at ');
+            addBold(data.fromAddr.short);
+            addText(' and delivery to ');
+            addBold(data.toAddr.short);
+            addText('.');
+        }
         addBr(); addBr();
 
         addText('Package specs:');
@@ -586,22 +805,110 @@ Via ${service.name}`;
         }
         addBr(); addBr();
 
-        addBold('PICK UP – AFTER ');
-        addBold(data.pickup);
-        addBr();
-        data.fromAddr.full.split('\n').forEach((line, i) => {
-            if (i > 0) addBr();
-            addText(line);
-        });
-        addBr(); addBr();
+        if (data.isRoundTrip && data.isMultiStop) {
+            addBold('PICK UP – AFTER ');
+            addBold(data.pickup);
+            addBr();
+            data.fromAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+            addBr(); addBr();
 
-        addBold('DROP OFF – BEFORE ');
-        addBold(data.dropoff);
-        addBr();
-        data.toAddr.full.split('\n').forEach((line, i) => {
-            if (i > 0) addBr();
-            addText(line);
-        });
+            addBold('STOP 1');
+            addBr();
+            data.toAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+            addBr(); addBr();
+
+            addBold('STOP 2');
+            addBr();
+            data.stop2Addr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+            addBr(); addBr();
+
+            addBold('DROP OFF – BEFORE ');
+            addBold(data.dropoff);
+            addBr();
+            data.fromAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+
+        } else if (data.isRoundTrip) {
+            addBold('PICK UP – AFTER ');
+            addBold(data.pickup);
+            addBr();
+            data.fromAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+            addBr(); addBr();
+
+            addBold('PICK UP / DROP OFF');
+            addBr();
+            data.toAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+            addBr(); addBr();
+
+            addBold('DROP OFF – BEFORE ');
+            addBold(data.dropoff);
+            addBr();
+            data.fromAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+
+        } else if (data.isMultiStop) {
+            addBold('PICK UP – AFTER ');
+            addBold(data.pickup);
+            addBr();
+            data.fromAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+            addBr(); addBr();
+
+            addBold('STOP 1');
+            addBr();
+            data.toAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+            addBr(); addBr();
+
+            addBold('DROP OFF – BEFORE ');
+            addBold(data.dropoff);
+            addBr();
+            data.stop2Addr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+
+        } else {
+            addBold('PICK UP – AFTER ');
+            addBold(data.pickup);
+            addBr();
+            data.fromAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+            addBr(); addBr();
+
+            addBold('DROP OFF – BEFORE ');
+            addBold(data.dropoff);
+            addBr();
+            data.toAddr.full.split('\n').forEach((line, i) => {
+                if (i > 0) addBr();
+                addText(line);
+            });
+        }
         addBr(); addBr();
 
         addText('Please let me know if this is possible.');
@@ -616,7 +923,23 @@ Via ${service.name}`;
         addBr();
         addText(`Pickup : ${data.fromAddr.short}${data.po ? ' PO ' + data.po : ''}`);
         addBr();
-        addText(`Delivery : ${data.toAddr.short}`);
+        if (data.isRoundTrip && data.isMultiStop) {
+            addText(`Stop 1 : ${data.toAddr.short}`);
+            addBr();
+            addText(`Stop 2 : ${data.stop2Addr.short}`);
+            addBr();
+            addText(`Dropoff : ${data.fromAddr.short}`);
+        } else if (data.isRoundTrip) {
+            addText(`Stop : ${data.toAddr.short}`);
+            addBr();
+            addText(`Dropoff : ${data.fromAddr.short}`);
+        } else if (data.isMultiStop) {
+            addText(`Stop 1 : ${data.toAddr.short}`);
+            addBr();
+            addText(`Delivery : ${data.stop2Addr.short}`);
+        } else {
+            addText(`Delivery : ${data.toAddr.short}`);
+        }
         addBr();
         addText(`Via ${data.serviceName}`);
 
