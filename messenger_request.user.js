@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.16
+// @version      1.17
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
@@ -433,6 +433,7 @@ window.MESSENGER_DATA = {
         const toName = document.getElementById('mr-to').value;
         const packageName = document.getElementById('mr-package').value;
         const po = document.getElementById('mr-po').value;
+        const poSuffix = po ? ` PO ${po}` : '';
         const pickup = document.getElementById('mr-pickup').value;
         const dropoff = document.getElementById('mr-dropoff').value;
 
@@ -516,7 +517,7 @@ window.MESSENGER_DATA = {
 I would like to schedule a pickup for ${pickupDateTextPlain} between ${pickup} - ${dropoff} at ${fromAddr.short} and delivery to ${toAddr.short}.
 
 Package specs:
-${pkgDesc} PO ${po}
+${pkgDesc}${poSuffix}
 
 PICK UP – AFTER ${pickup}
 ${fromAddr.full}
@@ -530,7 +531,7 @@ Thank you so much,
 ${userName}
 
 ${dateDayNum} ${monthName} ${year} MESSENGER
-Pickup : ${fromAddr.short} PO ${po}
+Pickup : ${fromAddr.short}${poSuffix}
 Delivery : ${toAddr.short}
 Via ${service.name}`;
 
@@ -578,8 +579,11 @@ Via ${service.name}`;
 
         addText('Package specs:');
         addBr();
-        addText(`${data.pkgDesc} PO `);
-        addBold(data.po);
+        addText(data.pkgDesc);
+        if (data.po) {
+            addText(' PO ');
+            addBold(data.po);
+        }
         addBr(); addBr();
 
         addBold('PICK UP – AFTER ');
@@ -610,7 +614,7 @@ Via ${service.name}`;
 
         addBold(`${data.dateDayNum} ${data.monthName} ${data.year} MESSENGER`);
         addBr();
-        addText(`Pickup : ${data.fromAddr.short} PO ${data.po}`);
+        addText(`Pickup : ${data.fromAddr.short}${data.po ? ' PO ' + data.po : ''}`);
         addBr();
         addText(`Delivery : ${data.toAddr.short}`);
         addBr();
