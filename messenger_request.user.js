@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.14
+// @version      1.16
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
@@ -63,6 +63,16 @@ window.MESSENGER_DATA = {
             "name": "KLN",
             "short": "KLN Studio",
             "full": "KLN Studio\nAttn: Toby Newman\n79 Grattan Street\nBrooklyn, NY, 11237\n707.291.6159"
+        },
+        {
+            "name": "Baikal",
+            "short": "Baikal",
+            "full": "Baikal Manufacturing /att: Mayang and Josef\n7 West 36th St 3rd FL\nNew York, NY 10018\n212-239-4650"
+        },
+        {
+            "name": "EMPIRE METAL",
+            "short": "EMPIRE METAL",
+            "full": "EMPIRE METAL attn: Vinny Giaccone\n24-69 46TH ST\nASTORIA NY 11103\n718.545.6700"
         }
     ],
     "packages": [
@@ -217,7 +227,54 @@ window.MESSENGER_DATA = {
             div.appendChild(input);
             return div;
         }
+
+        // Helper to add custom address logic
+        function addCustomAddressBehavior(fieldDiv, selectId, customId) {
+            const container = document.createElement('div');
+            container.style.display = 'none';
+            container.style.marginTop = '5px';
+
+            const textarea = document.createElement('textarea');
+            textarea.id = customId;
+            textarea.placeholder = "Enter Address:\nName\nStreet\nCity, State Zip\nPhone";
+            textarea.style.width = '100%';
+            textarea.style.boxSizing = 'border-box';
+            textarea.rows = 4;
+            textarea.style.fontFamily = 'inherit';
+
+            const backBtn = document.createElement('a');
+            backBtn.href = '#';
+            backBtn.innerText = '← Back to address list';
+            backBtn.style.display = 'block';
+            backBtn.style.marginTop = '4px';
+            backBtn.style.fontSize = '12px';
+            backBtn.style.color = '#1a73e8';
+            backBtn.style.textDecoration = 'none';
+
+            backBtn.onclick = (e) => {
+                e.preventDefault();
+                container.style.display = 'none';
+                select.style.display = 'block';
+                select.value = select.options[0].value;
+            };
+
+            container.appendChild(textarea);
+            container.appendChild(backBtn);
+            fieldDiv.appendChild(container);
+
+            const select = fieldDiv.querySelector('select');
+            select.addEventListener('change', () => {
+                if (select.value === 'Other') {
+                    select.style.display = 'none';
+                    container.style.display = 'block';
+                    textarea.focus();
+                }
+            });
+        }
+
         const addressOptions = DATA.addresses.map(a => ({ value: a.name, text: a.name }));
+        addressOptions.push({ value: 'Other', text: 'Other' });
+
         const packageOptions = DATA.packages.map(p => ({ value: p.name, text: p.name }));
         const serviceOptions = Object.keys(SERVICES).map(s => ({ value: s, text: s }));
 
@@ -250,8 +307,13 @@ window.MESSENGER_DATA = {
         dateField.querySelector('input').value = defaultDateValue;
         modal.appendChild(dateField);
 
-        modal.appendChild(createField('From Address', 'select', 'mr-from', addressOptions));
-        modal.appendChild(createField('To Address', 'select', 'mr-to', addressOptions));
+        const fromField = createField('From Address', 'select', 'mr-from', addressOptions);
+        addCustomAddressBehavior(fromField, 'mr-from', 'mr-from-custom');
+        modal.appendChild(fromField);
+
+        const toField = createField('To Address', 'select', 'mr-to', addressOptions);
+        addCustomAddressBehavior(toField, 'mr-to', 'mr-to-custom');
+        modal.appendChild(toField);
 
         modal.appendChild(createField('Package', 'datalist', 'mr-package', packageOptions));
 
@@ -374,8 +436,31 @@ window.MESSENGER_DATA = {
         const pickup = document.getElementById('mr-pickup').value;
         const dropoff = document.getElementById('mr-dropoff').value;
 
-        const fromAddr = DATA.addresses.find(a => a.name === fromName);
-        const toAddr = DATA.addresses.find(a => a.name === toName);
+        let fromAddr;
+        if (fromName === 'Other') {
+            const customText = document.getElementById('mr-from-custom').value;
+            const lines = customText.split('\n').filter(l => l.trim().length > 0);
+            fromAddr = {
+                name: 'Other',
+                short: lines.length > 0 ? lines[0] : 'Custom Location',
+                full: customText
+            };
+        } else {
+            fromAddr = DATA.addresses.find(a => a.name === fromName);
+        }
+
+        let toAddr;
+        if (toName === 'Other') {
+            const customText = document.getElementById('mr-to-custom').value;
+            const lines = customText.split('\n').filter(l => l.trim().length > 0);
+            toAddr = {
+                name: 'Other',
+                short: lines.length > 0 ? lines[0] : 'Custom Location',
+                full: customText
+            };
+        } else {
+            toAddr = DATA.addresses.find(a => a.name === toName);
+        }
 
         // Find package description if it matches a known package, otherwise use the input value
         const knownPkg = DATA.packages.find(p => p.name === packageName);
