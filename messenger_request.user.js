@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.13
+// @version      1.14
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
@@ -659,49 +659,58 @@ Via ${service.name}`;
     function addButton() {
         if (document.getElementById('mr-btn-trigger')) return;
 
+        let injected = false;
+
         // Strategy: Find the button with text "Compose" more robustly
-        // Look for div with role="button" that contains "Compose"
+        // Look for div with role="button" containing "Compose" in text or aria-label
         const buttons = Array.from(document.querySelectorAll('div[role="button"]'));
-        const composeBtn = buttons.find(b => b.innerText && b.innerText.includes('Compose'));
+
+        const composeBtn = buttons.find(b => {
+            // Must be visible
+            if (b.offsetParent === null) return false;
+
+            const text = (b.innerText || '').trim();
+            const label = (b.getAttribute('aria-label') || '').trim();
+
+            // Check for English "Compose" in either text or accessible label
+            return text.includes('Compose') || label.includes('Compose');
+        });
 
         if (composeBtn) {
             console.log('Messenger Request: Found Compose button');
 
-            // Remove fixed button if it exists
-            const fixedBtn = document.getElementById('mr-btn-fixed');
-            if (fixedBtn) fixedBtn.remove();
-
-            const btn = createButtonElement(false);
-
-            // We want to insert it AFTER the Compose button's container.
-            // The Compose button is usually inside a container that is a sibling to the Navigation (Inbox, Starred, etc.)
-            // Let's try to find the container of the Compose button.
-
-            let container = composeBtn.parentElement;
-            // Traverse up a few levels to find a container that looks like the sidebar header
-            // or just insert after the button's direct parent if it seems isolated
-
-            // In modern Gmail, the Compose button is often in a div that is a sibling to the div containing "Inbox"
-            // Let's try to insert after the Compose button's immediate parent wrapper
-
+            // Attempt insertion logic
+            const container = composeBtn.parentElement;
             if (container) {
-                // Check if we can find the "Inbox" container to insert before?
-                // It's safer to just append after the Compose button wrapper.
+                // Remove fixed button if it exists (in case we regained context)
+                const fixedBtn = document.getElementById('mr-btn-fixed');
+                if (fixedBtn) fixedBtn.remove();
+
+                const btn = createButtonElement(false);
 
                 // Create a wrapper to align it
                 const wrapper = document.createElement('div');
                 wrapper.style.display = 'flex';
-                wrapper.style.paddingLeft = '13px'; // Restore padding to align with Compose
-                wrapper.style.marginTop = '22px'; // Move lower
+                // Adjust styling to try and match the sidebar alignment
+                wrapper.style.paddingLeft = '13px';
+                wrapper.style.marginTop = '22px';
                 wrapper.appendChild(btn);
 
-                // Insert after the parent
+                // Insert after the parent container
                 container.insertAdjacentElement('afterend', wrapper);
-                return;
+                injected = true;
             }
         }
 
-
+        // Fallback: If inline injection failed/not possible, show fixed button
+        if (!injected) {
+            // Only add if not already present
+            if (!document.getElementById('mr-btn-fixed')) {
+                console.log('Messenger Request: Inline button failed, using fixed button fallback');
+                const fixedBtn = createButtonElement(true);
+                document.body.appendChild(fixedBtn);
+            }
+        }
     }
 
     // Observer to handle dynamic loading
