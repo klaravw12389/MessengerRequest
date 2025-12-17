@@ -788,14 +788,14 @@ Via ${service.name}`;
         }
 
         // Fallback: If inline injection failed/not possible, show fixed button
-        if (!injected) {
-            // Only add if not already present
-            if (!document.getElementById('mr-btn-fixed')) {
-                console.log('Messenger Request: Inline button failed, using fixed button fallback');
-                const fixedBtn = createButtonElement(true);
-                document.body.appendChild(fixedBtn);
-            }
-        }
+        // if (!injected) {
+        //     // Only add if not already present
+        //     if (!document.getElementById('mr-btn-fixed')) {
+        //         console.log('Messenger Request: Inline button failed, using fixed button fallback');
+        //         const fixedBtn = createButtonElement(true);
+        //         document.body.appendChild(fixedBtn);
+        //     }
+        // }
     }
 
     // Observer to handle dynamic loading
