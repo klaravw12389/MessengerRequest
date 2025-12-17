@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.21
+// @version      1.22
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
@@ -344,40 +344,45 @@ window.MESSENGER_DATA = {
 
         modal.appendChild(timeContainer);
 
+        // Checkbox Container
+        const checkboxContainer = document.createElement('div');
+        checkboxContainer.style.display = 'flex';
+        checkboxContainer.style.gap = '20px'; // Space between the two options
+        checkboxContainer.className = 'mr-field';
+
         // Round Trip Checkbox
         const roundTripDiv = document.createElement('div');
-        roundTripDiv.className = 'mr-field';
+        // roundTripDiv.className = 'mr-field'; // Remove class to avoid bottom margin acting weird in flex
         roundTripDiv.style.display = 'flex';
         roundTripDiv.style.alignItems = 'center';
-        roundTripDiv.style.cursor = 'pointer'; // Make entire area clickable-looking
-        roundTripDiv.style.marginLeft = '8px'; // Shift right slightly
+        roundTripDiv.style.cursor = 'pointer';
+        roundTripDiv.style.marginLeft = '8px';
 
         const roundTripCheckbox = document.createElement('input');
         roundTripCheckbox.type = 'checkbox';
         roundTripCheckbox.id = 'mr-round-trip';
-        roundTripCheckbox.style.width = 'auto'; // Override 100% width
+        roundTripCheckbox.style.width = 'auto';
         roundTripCheckbox.style.marginRight = '10px';
-        roundTripCheckbox.style.transform = 'scale(1.5)'; // Make it bigger
+        roundTripCheckbox.style.transform = 'scale(1.5)';
         roundTripCheckbox.style.cursor = 'pointer';
 
         const roundTripLabel = document.createElement('label');
         roundTripLabel.innerText = 'Round Trip';
-        roundTripLabel.setAttribute('for', 'mr-round-trip'); // Correct way to set 'for'
-        roundTripLabel.style.marginBottom = '0'; // Override default margin
+        roundTripLabel.setAttribute('for', 'mr-round-trip');
+        roundTripLabel.style.marginBottom = '0';
         roundTripLabel.style.cursor = 'pointer';
-        roundTripLabel.style.fontSize = '16px'; // Slightly larger text to match
+        roundTripLabel.style.fontSize = '16px';
 
         roundTripDiv.appendChild(roundTripCheckbox);
         roundTripDiv.appendChild(roundTripLabel);
-        modal.appendChild(roundTripDiv);
 
         // Multi-Stop Checkbox
         const multiStopDiv = document.createElement('div');
-        multiStopDiv.className = 'mr-field';
+        // multiStopDiv.className = 'mr-field';
         multiStopDiv.style.display = 'flex';
         multiStopDiv.style.alignItems = 'center';
         multiStopDiv.style.cursor = 'pointer';
-        multiStopDiv.style.marginLeft = '8px'; // Shift right slightly
+        // multiStopDiv.style.marginLeft = '8px'; // Remove individual margin if they are in a flex container
 
         const multiStopCheckbox = document.createElement('input');
         multiStopCheckbox.type = 'checkbox';
@@ -396,7 +401,11 @@ window.MESSENGER_DATA = {
 
         multiStopDiv.appendChild(multiStopCheckbox);
         multiStopDiv.appendChild(multiStopLabel);
-        modal.appendChild(multiStopDiv);
+
+        checkboxContainer.appendChild(roundTripDiv);
+        checkboxContainer.appendChild(multiStopDiv);
+
+        modal.appendChild(checkboxContainer);
 
         // Multi-Stop Logic
         multiStopCheckbox.addEventListener('change', () => {
