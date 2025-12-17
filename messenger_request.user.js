@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.20
+// @version      1.21
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
@@ -350,6 +350,7 @@ window.MESSENGER_DATA = {
         roundTripDiv.style.display = 'flex';
         roundTripDiv.style.alignItems = 'center';
         roundTripDiv.style.cursor = 'pointer'; // Make entire area clickable-looking
+        roundTripDiv.style.marginLeft = '8px'; // Shift right slightly
 
         const roundTripCheckbox = document.createElement('input');
         roundTripCheckbox.type = 'checkbox';
@@ -376,6 +377,7 @@ window.MESSENGER_DATA = {
         multiStopDiv.style.display = 'flex';
         multiStopDiv.style.alignItems = 'center';
         multiStopDiv.style.cursor = 'pointer';
+        multiStopDiv.style.marginLeft = '8px'; // Shift right slightly
 
         const multiStopCheckbox = document.createElement('input');
         multiStopCheckbox.type = 'checkbox';
