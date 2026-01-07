@@ -52,7 +52,7 @@ window.MESSENGER_DATA = {
         {
             "name": "DSA",
             "short": "DSA Finishing",
-            "full": "DSA FINISHING attn: Diego\n130-16 91st Avenue\nRichmond Hill, New York 11418\nUnited States\n(718) 821-2124"
+            "full": "DSA FINISHING\nattn: Diego\n130-16 91st Avenue\nRichmond Hill, New York 11418\nUnited States\n(718) 821-2124"
         },
         {
             "name": "CL Precision",
@@ -67,12 +67,12 @@ window.MESSENGER_DATA = {
         {
             "name": "Baikal",
             "short": "Baikal",
-            "full": "Baikal Manufacturing /att: Mayang and Josef\n7 West 36th St 3rd FL\nNew York, NY 10018\n212-239-4650"
+            "full": "Baikal Manufacturing\nattn: Mayang and Josef\n7 West 36th St 3rd FL\nNew York, NY 10018\n212-239-4650"
         },
         {
             "name": "EMPIRE METAL",
             "short": "EMPIRE METAL",
-            "full": "EMPIRE METAL attn: Vinny Giaccone\n24-69 46TH ST\nASTORIA NY 11103\n718.545.6700"
+            "full": "EMPIRE METAL\nattn: Vinny Giaccone\n24-69 46TH ST\nASTORIA NY 11103\n718.545.6700"
         }
     ],
     "packages": [
