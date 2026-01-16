@@ -52,7 +52,7 @@ window.MESSENGER_DATA = {
         {
             "name": "DSA",
             "short": "DSA Finishing",
-            "full": "DSA FINISHING\nattn: Diego\n130-16 91st Avenue\nRichmond Hill, New York 11418\nUnited States\n(718) 821-2124"
+            "full": "DSA FINISHING\nattn: Diego\n130-16 91st Avenue\nRichmond Hill, New York 11418\nUnited States\n(718) 821-2124\nask for box and pictures!"
         },
         {
             "name": "CL Precision",
