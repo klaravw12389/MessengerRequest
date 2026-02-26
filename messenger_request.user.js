@@ -78,7 +78,7 @@ window.MESSENGER_DATA = {
             "name": "EMPIRE METAL",
             "short": "EMPIRE METAL",
             "full": "EMPIRE METAL\nattn: Vinny Giaccone\n24-69 46TH ST\nASTORIA NY 11103\n718.545.6700"
-        }
+        },
         {
             "name": "Pakrite",
             "short": "Pakrite",
