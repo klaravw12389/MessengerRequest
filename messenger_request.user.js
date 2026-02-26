@@ -65,6 +65,11 @@ window.MESSENGER_DATA = {
             "full": "KLN Studio\nAttn: Toby Newman\n79 Grattan Street\nBrooklyn, NY, 11237\n707.291.6159"
         },
         {
+            "name": "Meisner",
+            "short": "Meisner",
+            "full": "MEISNER\n2-D SAXWOOD STREET\nDEER PARK, NEW YORK 11729\nTEL: 631-777-1711"
+        },
+        {
             "name": "Baikal",
             "short": "Baikal",
             "full": "Baikal Manufacturing\nattn: Mayang and Josef\n7 West 36th St 3rd FL\nNew York, NY 10018\n212-239-4650"
@@ -74,6 +79,11 @@ window.MESSENGER_DATA = {
             "short": "EMPIRE METAL",
             "full": "EMPIRE METAL\nattn: Vinny Giaccone\n24-69 46TH ST\nASTORIA NY 11103\n718.545.6700"
         }
+        {
+            "name": "Pakrite",
+            "short": "Pakrite",
+            "full": "PAKRITE\n485 C Brown Court\nOceanside NY 11572\nTEL: 718.276.1522"
+        }    
     ],
     "packages": [
         {
