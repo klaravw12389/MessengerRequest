@@ -41,8 +41,8 @@ window.MESSENGER_DATA = {
         {
             "name": "Libra",
             "short": "LIBRA LEATHER",
-            "full": "LIBRA LEATHER/MITCH ALFUS\n285 Lafayette Street, unit 2B\nNew York NY 10012\n212-695-3114\n*Temporary Address*"
-            //"full": "LIBRA LEATHER\nAttn: Valentina Taylor\n199 Lafayette Street, Unit 5D\nNew York, NY, 10012\n212-695-3114"
+            //"full": "LIBRA LEATHER/MITCH ALFUS\n285 Lafayette Street, unit 2B\nNew York NY 10012\n212-695-3114\n*Temporary Address*"
+            "full": "LIBRA LEATHER\nAttn: Valentina Taylor\n199 Lafayette Street, Unit 5D\nNew York, NY, 10012\n212-695-3114"
         },
         {
             "name": "NJWJ",
