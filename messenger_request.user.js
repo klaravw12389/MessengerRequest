@@ -1,7 +1,7 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.22
+// @version      1.25
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
@@ -121,6 +121,8 @@ window.MESSENGER_DATA = {
 
 (function () {
     'use strict';
+
+    const WALKINGMAN_ICON_DATA_URI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHhSURBVFhH7dbNi45RGMfxwcZbWHgpxkaysBAbCclivGRFSoqFlZksLSQLPklKzcK/IbIyMyxJSs1ylLKwoLwrkvfQqXPXNVdjMc/cd1HzrdPzPPfvOud3nXOfc52nr2+W/xmcxThuY3vWOwWD+B3aR6zNcZ2BsWr8KyRxNMd1Bq6kFShtS47rDCzETfzAN1zIMZ2CpdiMfViR9U7Babypy/4cp3JMJ2AdRqd496UN5PhWwQm8D4Zl9zet/L6X+7QG9gfj7/gwRQKldVOMcLUavMJOTKRVaBK4lfu2AkaqwXXMweeQQPm8H5IoZXlvHqNnMBeP6+DnsT6YNW13mX16dhdb83jTBmvCTA+V3Z6MfqIf83EGT4N2J483bbAEj/AWK3EgJfAC80L8YgzV17Vn8mg9gkVYXr+XEvw6JPClJJX7dEaZFXbUo9gk8amU5RzbCfUoXsTGatwk8Qyrc3yrlEun3nzF8Bi24WtI4mHZjLlfa+BkMJuoz8qpiCvRzX7AKrwLRoNBGw7Phyf3bAncCCYPkrYraONRawUcDgal8GxK+gK8rHrZI/1RnxFYVotNk8DlHFPAtRBzPOs9U/5qh4Gf/G2X40iIG8r6jMDBeiVvyFpDKcc4h0ulcmZ9ln+WP3If86lrQL1GAAAAAElFTkSuQmCC';
 
     // Embedded Data
     const DATA = window.MESSENGER_DATA || {
@@ -244,7 +246,7 @@ window.MESSENGER_DATA = {
 
             const backBtn = document.createElement('a');
             backBtn.href = '#';
-            backBtn.innerText = '← Back to address list';
+            backBtn.innerText = 'â† Back to address list';
             backBtn.style.display = 'block';
             backBtn.style.marginTop = '4px';
             backBtn.style.fontSize = '12px';
@@ -622,7 +624,7 @@ I would like to schedule a multi-stop round trip pickup for ${pickupDateTextPlai
 Package specs:
 ${pkgDesc}${poSuffix}
 
-PICK UP – AFTER ${pickup}
+PICK UP â€“ AFTER ${pickup}
 ${fromAddr.full}
 
 STOP 1
@@ -631,7 +633,7 @@ ${toAddr.full}
 STOP 2
 ${stop2Addr.full}
 
-DROP OFF – BEFORE ${dropoff}
+DROP OFF â€“ BEFORE ${dropoff}
 ${fromAddr.full}
 
 Please let me know if this is possible.
@@ -654,13 +656,13 @@ I would like to schedule a round trip pickup for ${pickupDateTextPlain} between 
 Package specs:
 ${pkgDesc}${poSuffix}
 
-PICK UP – AFTER ${pickup}
+PICK UP â€“ AFTER ${pickup}
 ${fromAddr.full}
 
 PICK UP / DROP OFF
 ${toAddr.full}
 
-DROP OFF – BEFORE ${dropoff}
+DROP OFF â€“ BEFORE ${dropoff}
 ${fromAddr.full}
 
 Please let me know if this is possible.
@@ -682,13 +684,13 @@ I would like to schedule a multi-stop pickup for ${pickupDateTextPlain} between 
 Package specs:
 ${pkgDesc}${poSuffix}
 
-PICK UP – AFTER ${pickup}
+PICK UP â€“ AFTER ${pickup}
 ${fromAddr.full}
 
 STOP 1
 ${toAddr.full}
 
-DROP OFF – BEFORE ${dropoff}
+DROP OFF â€“ BEFORE ${dropoff}
 ${stop2Addr.full}
 
 Please let me know if this is possible.
@@ -710,10 +712,10 @@ I would like to schedule a pickup for ${pickupDateTextPlain} between ${pickup} -
 Package specs:
 ${pkgDesc}${poSuffix}
 
-PICK UP – AFTER ${pickup}
+PICK UP â€“ AFTER ${pickup}
 ${fromAddr.full}
 
-DROP OFF – BEFORE ${dropoff}
+DROP OFF â€“ BEFORE ${dropoff}
 ${toAddr.full}
 
 Please let me know if this is possible.
@@ -817,7 +819,7 @@ Via ${service.name}`;
         addBr(); addBr();
 
         if (data.isRoundTrip && data.isMultiStop) {
-            addBold('PICK UP – AFTER ');
+            addBold('PICK UP â€“ AFTER ');
             addBold(data.pickup);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -842,7 +844,7 @@ Via ${service.name}`;
             });
             addBr(); addBr();
 
-            addBold('DROP OFF – BEFORE ');
+            addBold('DROP OFF â€“ BEFORE ');
             addBold(data.dropoff);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -851,7 +853,7 @@ Via ${service.name}`;
             });
 
         } else if (data.isRoundTrip) {
-            addBold('PICK UP – AFTER ');
+            addBold('PICK UP â€“ AFTER ');
             addBold(data.pickup);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -868,7 +870,7 @@ Via ${service.name}`;
             });
             addBr(); addBr();
 
-            addBold('DROP OFF – BEFORE ');
+            addBold('DROP OFF â€“ BEFORE ');
             addBold(data.dropoff);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -877,7 +879,7 @@ Via ${service.name}`;
             });
 
         } else if (data.isMultiStop) {
-            addBold('PICK UP – AFTER ');
+            addBold('PICK UP â€“ AFTER ');
             addBold(data.pickup);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -894,7 +896,7 @@ Via ${service.name}`;
             });
             addBr(); addBr();
 
-            addBold('DROP OFF – BEFORE ');
+            addBold('DROP OFF â€“ BEFORE ');
             addBold(data.dropoff);
             addBr();
             data.stop2Addr.full.split('\n').forEach((line, i) => {
@@ -903,7 +905,7 @@ Via ${service.name}`;
             });
 
         } else {
-            addBold('PICK UP – AFTER ');
+            addBold('PICK UP â€“ AFTER ');
             addBold(data.pickup);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -912,7 +914,7 @@ Via ${service.name}`;
             });
             addBr(); addBr();
 
-            addBold('DROP OFF – BEFORE ');
+            addBold('DROP OFF â€“ BEFORE ');
             addBold(data.dropoff);
             addBr();
             data.toAddr.full.split('\n').forEach((line, i) => {
@@ -1022,7 +1024,6 @@ Via ${service.name}`;
 
     function createButtonElement(isFixed = false) {
         const btn = document.createElement('div');
-        btn.innerText = 'Messenger Request';
         btn.style.cursor = 'pointer';
 
         // Reverted Styles with Drop Shadow
@@ -1034,6 +1035,7 @@ Via ${service.name}`;
         btn.style.display = 'flex';
         btn.style.alignItems = 'center';
         btn.style.justifyContent = 'center';
+        btn.style.gap = '8px';
         btn.style.fontFamily = "'Google Sans',Roboto,RobotoDraft,Helvetica,Arial,sans-serif";
         btn.style.fontSize = '14px';
         btn.style.lineHeight = '20px';
@@ -1041,6 +1043,21 @@ Via ${service.name}`;
 
         // Add Drop Shadow
         btn.style.boxShadow = '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)';
+
+        const icon = document.createElement('img');
+        icon.src = WALKINGMAN_ICON_DATA_URI;
+        icon.alt = '';
+        icon.style.width = '26px';
+        icon.style.height = '26px';
+        icon.style.display = 'block';
+        icon.style.flexShrink = '0';
+        icon.style.marginLeft = '-14px';
+        icon.style.marginRight = '-5px';
+        btn.appendChild(icon);
+
+        const label = document.createElement('span');
+        label.innerText = 'Messenger Request';
+        btn.appendChild(label);
 
         if (isFixed) {
             btn.id = 'mr-btn-fixed';
@@ -1052,7 +1069,6 @@ Via ${service.name}`;
             btn.style.borderRadius = '28px'; // FAB style
             btn.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
             btn.style.backgroundColor = 'white'; // Fixed button usually white
-            btn.innerText = 'Messenger Request';
         } else {
             btn.id = 'mr-btn-trigger';
             btn.style.height = '45px';
