@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
 // @version      1.25
@@ -246,7 +246,7 @@ window.MESSENGER_DATA = {
 
             const backBtn = document.createElement('a');
             backBtn.href = '#';
-            backBtn.innerText = 'â† Back to address list';
+            backBtn.innerText = '← Back to address list';
             backBtn.style.display = 'block';
             backBtn.style.marginTop = '4px';
             backBtn.style.fontSize = '12px';
@@ -624,7 +624,7 @@ I would like to schedule a multi-stop round trip pickup for ${pickupDateTextPlai
 Package specs:
 ${pkgDesc}${poSuffix}
 
-PICK UP â€“ AFTER ${pickup}
+PICK UP – AFTER ${pickup}
 ${fromAddr.full}
 
 STOP 1
@@ -633,7 +633,7 @@ ${toAddr.full}
 STOP 2
 ${stop2Addr.full}
 
-DROP OFF â€“ BEFORE ${dropoff}
+DROP OFF – BEFORE ${dropoff}
 ${fromAddr.full}
 
 Please let me know if this is possible.
@@ -656,13 +656,13 @@ I would like to schedule a round trip pickup for ${pickupDateTextPlain} between 
 Package specs:
 ${pkgDesc}${poSuffix}
 
-PICK UP â€“ AFTER ${pickup}
+PICK UP – AFTER ${pickup}
 ${fromAddr.full}
 
 PICK UP / DROP OFF
 ${toAddr.full}
 
-DROP OFF â€“ BEFORE ${dropoff}
+DROP OFF – BEFORE ${dropoff}
 ${fromAddr.full}
 
 Please let me know if this is possible.
@@ -684,13 +684,13 @@ I would like to schedule a multi-stop pickup for ${pickupDateTextPlain} between 
 Package specs:
 ${pkgDesc}${poSuffix}
 
-PICK UP â€“ AFTER ${pickup}
+PICK UP – AFTER ${pickup}
 ${fromAddr.full}
 
 STOP 1
 ${toAddr.full}
 
-DROP OFF â€“ BEFORE ${dropoff}
+DROP OFF – BEFORE ${dropoff}
 ${stop2Addr.full}
 
 Please let me know if this is possible.
@@ -712,10 +712,10 @@ I would like to schedule a pickup for ${pickupDateTextPlain} between ${pickup} -
 Package specs:
 ${pkgDesc}${poSuffix}
 
-PICK UP â€“ AFTER ${pickup}
+PICK UP – AFTER ${pickup}
 ${fromAddr.full}
 
-DROP OFF â€“ BEFORE ${dropoff}
+DROP OFF – BEFORE ${dropoff}
 ${toAddr.full}
 
 Please let me know if this is possible.
@@ -819,7 +819,7 @@ Via ${service.name}`;
         addBr(); addBr();
 
         if (data.isRoundTrip && data.isMultiStop) {
-            addBold('PICK UP â€“ AFTER ');
+            addBold('PICK UP – AFTER ');
             addBold(data.pickup);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -844,7 +844,7 @@ Via ${service.name}`;
             });
             addBr(); addBr();
 
-            addBold('DROP OFF â€“ BEFORE ');
+            addBold('DROP OFF – BEFORE ');
             addBold(data.dropoff);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -853,7 +853,7 @@ Via ${service.name}`;
             });
 
         } else if (data.isRoundTrip) {
-            addBold('PICK UP â€“ AFTER ');
+            addBold('PICK UP – AFTER ');
             addBold(data.pickup);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -870,7 +870,7 @@ Via ${service.name}`;
             });
             addBr(); addBr();
 
-            addBold('DROP OFF â€“ BEFORE ');
+            addBold('DROP OFF – BEFORE ');
             addBold(data.dropoff);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -879,7 +879,7 @@ Via ${service.name}`;
             });
 
         } else if (data.isMultiStop) {
-            addBold('PICK UP â€“ AFTER ');
+            addBold('PICK UP – AFTER ');
             addBold(data.pickup);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -896,7 +896,7 @@ Via ${service.name}`;
             });
             addBr(); addBr();
 
-            addBold('DROP OFF â€“ BEFORE ');
+            addBold('DROP OFF – BEFORE ');
             addBold(data.dropoff);
             addBr();
             data.stop2Addr.full.split('\n').forEach((line, i) => {
@@ -905,7 +905,7 @@ Via ${service.name}`;
             });
 
         } else {
-            addBold('PICK UP â€“ AFTER ');
+            addBold('PICK UP – AFTER ');
             addBold(data.pickup);
             addBr();
             data.fromAddr.full.split('\n').forEach((line, i) => {
@@ -914,7 +914,7 @@ Via ${service.name}`;
             });
             addBr(); addBr();
 
-            addBold('DROP OFF â€“ BEFORE ');
+            addBold('DROP OFF – BEFORE ');
             addBold(data.dropoff);
             addBr();
             data.toAddr.full.split('\n').forEach((line, i) => {
