@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.28
+// @version      1.29
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
@@ -900,6 +900,7 @@ Via ${service.name}`;
         const addText = (text) => fragment.appendChild(document.createTextNode(text));
         const addBold = (text) => {
             const b = document.createElement('b');
+            b.style.fontWeight = 'bold'; // matches what Gmail's own toolbar produces for bold text
             b.innerText = text;
             fragment.appendChild(b);
         };
