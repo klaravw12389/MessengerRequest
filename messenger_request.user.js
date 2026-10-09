@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.27
+// @version      1.28
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
 // @updateURL    https://raw.githubusercontent.com/klaravw12389/MessengerRequest/refs/heads/main/messenger_request.user.js
 // @downloadURL  https://raw.githubusercontent.com/klaravw12389/MessengerRequest/refs/heads/main/messenger_request.user.js
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
 // ==/UserScript==
 
 // Embedded Data
@@ -124,6 +125,78 @@ window.MESSENGER_DATA = {
 
     const WALKINGMAN_ICON_DATA_URI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHhSURBVFhH7dbNi45RGMfxwcZbWHgpxkaysBAbCclivGRFSoqFlZksLSQLPklKzcK/IbIyMyxJSs1ylLKwoLwrkvfQqXPXNVdjMc/cd1HzrdPzPPfvOud3nXOfc52nr2+W/xmcxThuY3vWOwWD+B3aR6zNcZ2BsWr8KyRxNMd1Bq6kFShtS47rDCzETfzAN1zIMZ2CpdiMfViR9U7Babypy/4cp3JMJ2AdRqd496UN5PhWwQm8D4Zl9zet/L6X+7QG9gfj7/gwRQKldVOMcLUavMJOTKRVaBK4lfu2AkaqwXXMweeQQPm8H5IoZXlvHqNnMBeP6+DnsT6YNW13mX16dhdb83jTBmvCTA+V3Z6MfqIf83EGT4N2J483bbAEj/AWK3EgJfAC80L8YgzV17Vn8mg9gkVYXr+XEvw6JPClJJX7dEaZFXbUo9gk8amU5RzbCfUoXsTGatwk8Qyrc3yrlEun3nzF8Bi24WtI4mHZjLlfa+BkMJuoz8qpiCvRzX7AKrwLRoNBGw7Phyf3bAncCCYPkrYraONRawUcDgal8GxK+gK8rHrZI/1RnxFYVotNk8DlHFPAtRBzPOs9U/5qh4Gf/G2X40iIG8r6jMDBeiVvyFpDKcc4h0ulcmZ9ln+WP3If86lrQL1GAAAAAElFTkSuQmCC';
 
+    // Gmail doesn't auto-insert the default signature into compose windows opened via
+    // mailto:, so we store a copy ourselves and append it manually after injection.
+    let userSignature = '';
+    try {
+        userSignature = GM_getValue('mr_signature') || '';
+    } catch (e) {
+        console.error('Messenger Request: Error loading stored signature', e);
+    }
+
+    // Gmail's page enforces a Trusted Types CSP, which blocks not just .innerHTML but also
+    // DOMParser.parseFromString(..., 'text/html') and Range.createContextualFragment - every
+    // built-in string-to-HTML API. So we hand-parse the (browser-generated) signature markup
+    // into real nodes using only ungoverned APIs: createElement/setAttribute/createTextNode/appendChild.
+    const VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+    const NAMED_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+
+    function decodeEntities(str) {
+        return str.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (full, ent) => {
+            if (ent[0] === '#') {
+                const code = (ent[1] === 'x' || ent[1] === 'X') ? parseInt(ent.slice(2), 16) : parseInt(ent.slice(1), 10);
+                return Number.isNaN(code) ? full : String.fromCodePoint(code);
+            }
+            return Object.prototype.hasOwnProperty.call(NAMED_ENTITIES, ent) ? NAMED_ENTITIES[ent] : full;
+        });
+    }
+
+    function parseHtmlFragment(html) {
+        const clean = html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '');
+        const rootFrag = document.createDocumentFragment();
+        const stack = [rootFrag];
+        const tagRe = /<\/?([a-zA-Z][a-zA-Z0-9-]*)((?:\s+[^<>]*?)?)\s*\/?>|([^<]+)/g;
+        let match;
+        while ((match = tagRe.exec(clean)) !== null) {
+            const [full, tagName, attrsStr, text] = match;
+            if (text !== undefined) {
+                stack[stack.length - 1].appendChild(document.createTextNode(decodeEntities(text)));
+                continue;
+            }
+            if (full[1] === '/') {
+                if (stack.length > 1) stack.pop();
+                continue;
+            }
+            const el = document.createElement(tagName);
+            if (attrsStr) {
+                const attrRe = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*(?:=\s*("([^"]*)"|'([^']*)'|[^\s"'>]+))?/g;
+                let am;
+                while ((am = attrRe.exec(attrsStr)) !== null) {
+                    const name = am[1].toLowerCase();
+                    if (name.startsWith('on')) continue; // strip inline event handlers
+                    const value = am[3] !== undefined ? am[3] : (am[4] !== undefined ? am[4] : (am[2] || ''));
+                    if (name === 'href' && /^\s*javascript:/i.test(value)) continue;
+                    el.setAttribute(name, decodeEntities(value));
+                }
+            }
+            stack[stack.length - 1].appendChild(el);
+            const isVoid = VOID_ELEMENTS.has(tagName.toLowerCase()) || full.endsWith('/>');
+            if (!isVoid) stack.push(el);
+        }
+        return rootFrag;
+    }
+
+    function setRichHTML(el, html) {
+        el.textContent = '';
+        if (!html) return;
+        try {
+            el.appendChild(parseHtmlFragment(html));
+        } catch (e) {
+            console.error('Messenger Request: Error parsing signature HTML', e);
+            el.appendChild(document.createTextNode(html));
+        }
+    }
+
     // Embedded Data
     const DATA = window.MESSENGER_DATA || {
         "addresses": [],
@@ -173,6 +246,7 @@ window.MESSENGER_DATA = {
         .mr-btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
         .mr-btn-primary { background: #1a73e8; color: white; }
         .mr-btn-secondary { background: #ddd; color: black; }
+        #mr-signature-input:empty:before { content: attr(data-placeholder); color: #9aa0a6; }
     `;
     document.head.appendChild(style);
 
@@ -186,9 +260,26 @@ window.MESSENGER_DATA = {
         const modal = document.createElement('div');
         modal.id = 'mr-modal';
 
+        // Title wrapper with gear icon
+        const titleContainer = document.createElement('div');
+        titleContainer.style.display = 'flex';
+        titleContainer.style.justifyContent = 'space-between';
+        titleContainer.style.alignItems = 'center';
+        titleContainer.style.cursor = 'move';
+
         const title = document.createElement('h2');
         title.innerText = 'Messenger Request';
-        modal.appendChild(title);
+        title.style.margin = '0';
+        titleContainer.appendChild(title);
+
+        const gearBtn = document.createElement('span');
+        gearBtn.innerText = '⚙️';
+        gearBtn.style.cursor = 'pointer';
+        gearBtn.style.fontSize = '18px';
+        gearBtn.style.userSelect = 'none';
+        gearBtn.title = 'Settings';
+        titleContainer.appendChild(gearBtn);
+        modal.appendChild(titleContainer);
 
         function createField(labelText, type, id, options = null, placeholder = '') {
             const div = document.createElement('div');
@@ -421,6 +512,64 @@ window.MESSENGER_DATA = {
             }
         });
 
+        // Settings Panel
+        const settingsPanel = document.createElement('div');
+        settingsPanel.id = 'mr-settings-panel';
+        settingsPanel.style.display = 'none';
+        settingsPanel.style.marginTop = '15px';
+        settingsPanel.style.paddingTop = '15px';
+        settingsPanel.style.borderTop = '1px solid #dadce0';
+
+        const sigLabel = document.createElement('label');
+        sigLabel.innerText = 'Email Signature (auto-added since Gmail skips your default one here)';
+        sigLabel.style.display = 'block';
+        sigLabel.style.fontSize = '12px';
+        sigLabel.style.fontWeight = 'bold';
+        sigLabel.style.color = '#5f6368';
+        sigLabel.style.marginBottom = '6px';
+        settingsPanel.appendChild(sigLabel);
+
+        const sigHint = document.createElement('div');
+        sigHint.innerText = 'Paste your signature below (e.g. copied from Gmail\'s own signature settings) to keep its font, size and formatting.';
+        sigHint.style.fontSize = '11px';
+        sigHint.style.color = '#5f6368';
+        sigHint.style.marginBottom = '6px';
+        settingsPanel.appendChild(sigHint);
+
+        // Contenteditable (not a plain textarea) so pasted formatting - font, size, color, links - is preserved
+        const sigEditor = document.createElement('div');
+        sigEditor.id = 'mr-signature-input';
+        sigEditor.contentEditable = 'true';
+        setRichHTML(sigEditor, userSignature);
+        sigEditor.setAttribute('data-placeholder', 'Paste your signature here...');
+        sigEditor.style.width = '100%';
+        sigEditor.style.minHeight = '80px';
+        sigEditor.style.maxHeight = '160px';
+        sigEditor.style.overflowY = 'auto';
+        sigEditor.style.boxSizing = 'border-box';
+        sigEditor.style.fontSize = '14px';
+        sigEditor.style.padding = '8px';
+        sigEditor.style.border = '1px solid #dadce0';
+        sigEditor.style.borderRadius = '4px';
+        sigEditor.style.backgroundColor = 'white';
+        settingsPanel.appendChild(sigEditor);
+
+        sigEditor.addEventListener('blur', () => {
+            userSignature = sigEditor.innerHTML;
+            GM_setValue('mr_signature', userSignature);
+        });
+
+        modal.appendChild(settingsPanel);
+
+        // Toggle settings
+        gearBtn.onclick = () => {
+            if (settingsPanel.style.display === 'none') {
+                settingsPanel.style.display = 'block';
+            } else {
+                settingsPanel.style.display = 'none';
+            }
+        };
+
         const btnContainer = document.createElement('div');
         btnContainer.className = 'mr-buttons';
 
@@ -441,8 +590,7 @@ window.MESSENGER_DATA = {
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
-        // Drag functionality
-        const header = modal.querySelector('h2');
+        // Drag functionality - the whole title bar is the handle, not just the text
         let isDragging = false;
         let currentX;
         let currentY;
@@ -451,17 +599,16 @@ window.MESSENGER_DATA = {
         let xOffset = 0;
         let yOffset = 0;
 
-        header.addEventListener("mousedown", dragStart);
+        titleContainer.addEventListener("mousedown", dragStart);
         document.addEventListener("mouseup", dragEnd);
         document.addEventListener("mousemove", drag);
 
         function dragStart(e) {
+            if (e.target === gearBtn) return; // let the settings icon handle its own click
+
             initialX = e.clientX - xOffset;
             initialY = e.clientY - yOffset;
-
-            if (e.target === header) {
-                isDragging = true;
-            }
+            isDragging = true;
         }
 
         function dragEnd(e) {
@@ -1003,12 +1150,29 @@ Via ${service.name}`;
                 // Use DOM manipulation to bypass TrustedHTML issues
                 try {
                     bodyElement.focus();
+
+                    // Preserve the Gmail signature (if present) instead of wiping the whole body
+                    const signatureEl = bodyElement.querySelector('.gmail_signature');
+                    if (signatureEl) signatureEl.remove();
+
                     // Clear existing content safely
                     bodyElement.textContent = '';
 
                     // Create and append new content
                     const fragment = createRichBody(data);
                     bodyElement.appendChild(fragment);
+
+                    if (signatureEl) {
+                        bodyElement.appendChild(document.createElement('br'));
+                        bodyElement.appendChild(document.createElement('br'));
+                        bodyElement.appendChild(signatureEl);
+                    } else if (userSignature) {
+                        bodyElement.appendChild(document.createElement('br'));
+                        bodyElement.appendChild(document.createElement('br'));
+                        const sigContainer = document.createElement('div');
+                        setRichHTML(sigContainer, userSignature);
+                        bodyElement.appendChild(sigContainer);
+                    }
 
                     console.log('Messenger Request: DOM injection success');
                 } catch (e) {
