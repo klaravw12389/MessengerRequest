@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Gmail Messenger Request
 // @namespace    http://tampermonkey.net/
-// @version      1.26
+// @version      1.27
 // @description  Adds a button to Gmail to compose a Messenger Request email
 // @author       Antigravity
 // @match        https://mail.google.com/*
-// @updateURL    https://github.com/klaravw12389/MessengerRequest/raw/refs/heads/main/messenger_request.user.js
-// @downloadURL  https://github.com/klaravw12389/MessengerRequest/raw/refs/heads/main/messenger_request.user.js
+// @updateURL    https://raw.githubusercontent.com/klaravw12389/MessengerRequest/refs/heads/main/messenger_request.user.js
+// @downloadURL  https://raw.githubusercontent.com/klaravw12389/MessengerRequest/refs/heads/main/messenger_request.user.js
 // @grant        none
 // ==/UserScript==
 
